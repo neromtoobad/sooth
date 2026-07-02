@@ -19,6 +19,8 @@ export interface MarketOnChainState {
 
 const contractHashCache = new Map<string, string>();
 const schemasCache = new Map<string, unknown>();
+// events are append-only and immutable — cache parsed ones per package
+const eventCache = new Map<string, ParsedEvent[]>();
 
 /** latest contract hash inside a package (cspr.cloud if key present, else RPC) */
 export async function contractHashOf(packageHash: string): Promise<string> {
@@ -100,13 +102,19 @@ async function readEvents(packageHash: string, maxBack = 200): Promise<ParsedEve
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { parseEventDataFromBytes } = (cesMod2.default ?? cesMod2) as any;
 
-  const from = Math.max(0, length - maxBack);
-  const events: ParsedEvent[] = [];
+  const cached = eventCache.get(packageHash) ?? [];
+  if (cached.length >= length) return cached.slice(0, length);
+
+  const from = Math.max(cached.length, length - maxBack);
+  const events: ParsedEvent[] = [...cached];
   for (let i = from; i < length; i++) {
     const item = await rpc().getDictionaryItem(null, seed, String(i));
     const cl = item.storedValue.clValue as unknown as { bytes?(): Uint8Array };
     const raw = cl?.bytes?.();
-    if (!raw || raw.length < 8) continue;
+    if (!raw || raw.length < 8) {
+      events.push({ name: '__unparsed', data: {} });
+      continue;
+    }
     try {
       // raw = u32 payload-len + payload; payload = u32 name-len + "event_X" + fields
       const payload = raw.slice(4);
@@ -118,7 +126,10 @@ async function readEvents(packageHash: string, maxBack = 200): Promise<ParsedEve
       const fields = payload.slice(4 + nameLen);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const schema = (schemas as any)[name];
-      if (!schema) continue;
+      if (!schema) {
+        events.push({ name: '__unparsed', data: {} });
+        continue;
+      }
       const parsedData = parseEventDataFromBytes(schema, fields);
       const data: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(parsedData ?? {})) {
@@ -126,9 +137,10 @@ async function readEvents(packageHash: string, maxBack = 200): Promise<ParsedEve
       }
       events.push({ name, data });
     } catch {
-      // skip unparseable event
+      events.push({ name: '__unparsed', data: {} }); // keep index alignment
     }
   }
+  eventCache.set(packageHash, events);
   return events;
 }
 
