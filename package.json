@@ -15,6 +15,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@make-software/ces-js-parser": "^2.1.1",
     "casper-js-sdk": "^5.0.12"
   },
   "type": "module"

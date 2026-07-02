@@ -59,7 +59,10 @@ async function main() {
         }
 
         const price = await deterministicBtc();
-        const strike = strikeFromQuestion(market.question);
+        // strike recorded at creation in deployments.json is the source of truth;
+        // question parsing is the fallback for markets registered elsewhere
+        const strike =
+          (market as { strike?: number }).strike ?? strikeFromQuestion(market.question);
         const outcome = price > strike;
 
         logActivity({

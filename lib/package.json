@@ -6,6 +6,7 @@
   "main": "sooth.ts",
   "dependencies": {
     "@make-software/casper-x402": "^1.0.0",
+    "@make-software/ces-js-parser": "^2.1.1",
     "@x402/core": "^2.15.0",
     "@x402/express": "^2.14.0",
     "@x402/fetch": "^2.14.0",

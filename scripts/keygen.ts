@@ -1,6 +1,6 @@
 // generates the five sooth agent keypairs into keys/ as pem + accounts.json
 // run: pnpm keygen  (idempotent — skips keys that already exist)
-import { PrivateKey, KeyAlgorithm } from 'casper-js-sdk';
+import { PrivateKey, KeyAlgorithm } from '../lib/sdk.ts';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -13,7 +13,7 @@ const accounts: Record<string, { publicKey: string; accountHash: string }> = {};
 
 for (const name of NAMES) {
   const pemPath = join(KEYS_DIR, `${name}.pem`);
-  let key: PrivateKey;
+  let key: InstanceType<typeof PrivateKey>;
   if (existsSync(pemPath)) {
     key = PrivateKey.fromPem(readFileSync(pemPath, 'utf8'), KeyAlgorithm.ED25519);
     console.log(`${name}: exists, reusing`);

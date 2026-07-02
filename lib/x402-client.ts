@@ -12,7 +12,7 @@ export async function payingFetch(pemPath: string): Promise<typeof fetch> {
   const { createClientCasperSigner } = await import(
     '@make-software/casper-x402'
   );
-  const { KeyAlgorithm } = await import('casper-js-sdk');
+  const { KeyAlgorithm } = await import('./sdk.ts');
 
   const signer = await createClientCasperSigner(pemPath, KeyAlgorithm.ED25519);
 

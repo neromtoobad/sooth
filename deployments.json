@@ -1,0 +1,28 @@
+{
+  "network": "casper-test",
+  "markets": [
+    {
+      "hash": "3359a9dcbb07a017aa1d75ebff9a61f182cf620cc476a3859c104f7e2572bed8",
+      "question": "BTC/USD above spot in 2 hours (probe)",
+      "closeTs": 1783039168514,
+      "strike": 61451,
+      "createTx": "21a145675b1c70829316ddf80c2233c25ac1d406f12d287494a0bed92ab64a6a"
+    },
+    {
+      "hash": "ed2e52065451cba5a50eaa02915684f442c9ac5239feea0192f2eb668fad7873",
+      "question": "BTC/USD closes above $62066 at 2026-07-06 00:00 UTC",
+      "closeTs": 1783296000000,
+      "strike": 62066,
+      "createTx": "6b363fa3a4e012131ead9d0a4d707b680595c8b60d21214fd8599deab06a9078"
+    }
+  ],
+  "txs": {
+    "susd_install": "https://testnet.cspr.live/transaction/fbb318bcf12ee8b162b2699e5754c82c37a4ff7a8de1e4f52de2c1db2d93a4ee",
+    "bm_factory_install": "https://testnet.cspr.live/transaction/24ea3e2c9c84950f706b1a92273f1d63eeb01cf53de7a69648d6e2174d7b5c94",
+    "market_factory_install": "https://testnet.cspr.live/transaction/3b40ae48ddfda74d5b1af629c5d85dd8bfbcb5b536c1dae85156bcd9b86bc832"
+  },
+  "susdPackageHash": "8538c4e9b365943d04b3b2b54d69f8228baa926bed84734d553024383423ca17",
+  "binaryMarketFactoryHash": "2f4dbe03e0eb1288dc19d7862b6f903cedacf664c5e286dda8a640a9ef9302a5",
+  "factoryPackageHash": "b1c836f5dba09faa7f50e31f324ff22ad3186b77b2f7e24abd2be8b7c28c0a40",
+  "deployedAt": "2026-07-02T22:45:24.313Z"
+}
