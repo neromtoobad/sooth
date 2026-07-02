@@ -2,7 +2,7 @@
 // usage:
 //   const fetchPaid = await payingFetch('keys/momo.pem');
 //   const res = await fetchPaid('http://localhost:4021/feed/btc');
-import { readFileSync } from 'fs';
+import { join } from 'path';
 
 export async function payingFetch(pemPath: string): Promise<typeof fetch> {
   const { x402Client, wrapFetchWithPayment } = await import('@x402/fetch');
@@ -41,5 +41,5 @@ export async function settlementRef(res: Response): Promise<string | null> {
 }
 
 export function pemPathFor(agent: string): string {
-  return new URL(`../keys/${agent}.pem`, import.meta.url).pathname;
+  return join(import.meta.dirname, '..', 'keys', `${agent}.pem`);
 }
