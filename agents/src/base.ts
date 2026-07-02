@@ -75,6 +75,14 @@ export async function runAgent(
 
   logActivity({ agent: cfg.name, action: 'start', market: cfg.marketHash });
 
+  // one-time big allowance so the market can pull trade collateral
+  try {
+    const approveTx = await client.approve(cfg.marketHash, toNano(100_000));
+    logActivity({ agent: cfg.name, action: 'approve', txHash: approveTx });
+  } catch (e) {
+    logActivity({ agent: cfg.name, action: 'error', error: `approve failed: ${String(e)}` });
+  }
+
   for (;;) {
     const cycleStart = Date.now();
     try {
