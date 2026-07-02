@@ -68,7 +68,7 @@ The loop:
 
 - [x] **Phase 0** — environment, keys, faucet CSPR, repo, docs read — DONE except user-side items: faucet the 5 keys, CSPR.cloud API key in .env, DoraHacks BUIDL stub
 - [x] **Phase 1** — Odra contracts: sUSD (CEP-18), BinaryMarket (buy YES/NO via CPMM, resolve, claim), MarketFactory. 12 tests green. Trade-offs: buy-only v1 (sell = stretch); on-chain create_market via codegen factory can't run on OdraVM, gets verified on testnet in Phase 2 (tested register_market fallback in place)
-- [ ] **Phase 2** — deploy to Casper testnet, verify on testnet.cspr.live, thin TS client lib (`/lib/sooth.ts`) that can create market, trade, read state
+- [x] **Phase 2** — DONE 2026-07-02. sUSD (Cep18X402 as one-token-for-everything), BinaryMarketFactory + MarketFactory on testnet; TWO markets created via ON-CHAIN factory (create_market works on casper backend); traders funded; liquidity seeded; smoke trade moved p_yes 50%→54.7% with explorer receipt. All hashes in deployments.json. Reads via CES events (lib/market-reader.ts, RPC-only)
 - [ ] **Phase 3** — services: x402-gated `/feed` endpoint; trader agents momo + meanie trading live; resolver agent resolving a short-horizon market end-to-end
 - [ ] **Phase 4** — x402-gated `/oracle` endpoint; consumer agent demo; "vibes" LLM trader; dashboard live on Vercel
 - [ ] **Phase 5** — README, architecture diagram, demo video (3 min), BUIDL submitted on DoraHacks, CSPR.fans vote push on X
