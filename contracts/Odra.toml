@@ -1,0 +1,8 @@
+[[contracts]]
+fqn = "sooth_contracts::Susd"
+
+[[contracts]]
+fqn = "sooth_contracts::BinaryMarket"
+
+[[contracts]]
+fqn = "sooth_contracts::MarketFactory"
