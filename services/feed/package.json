@@ -5,5 +5,13 @@
   "description": "x402-gated market data endpoint",
   "scripts": {
     "start": "tsx src/index.ts"
-  }
+  },
+  "dependencies": {
+    "@sooth/lib": "workspace:*",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21"
+  },
+  "type": "module"
 }

@@ -2,6 +2,14 @@
   "name": "@sooth/lib",
   "private": true,
   "version": "0.0.1",
-  "description": "shared typescript client for sooth contracts",
-  "main": "sooth.ts"
+  "description": "shared typescript client for sooth contracts + x402 helpers",
+  "main": "sooth.ts",
+  "dependencies": {
+    "@make-software/casper-x402": "^1.0.0",
+    "@x402/core": "^2.15.0",
+    "@x402/express": "^2.14.0",
+    "@x402/fetch": "^2.14.0",
+    "casper-js-sdk": "^5.0.12"
+  },
+  "type": "module"
 }

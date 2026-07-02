@@ -5,5 +5,6 @@
   "description": "x402-gated probability oracle endpoint",
   "scripts": {
     "start": "tsx src/index.ts"
-  }
+  },
+  "type": "module"
 }

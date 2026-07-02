@@ -3,8 +3,15 @@
   "private": true,
   "version": "0.0.1",
   "description": "trader, resolver and consumer agents",
+  "type": "module",
   "scripts": {
     "start": "tsx src/run-traders.ts",
+    "momo": "tsx src/momo.ts",
+    "meanie": "tsx src/meanie.ts",
     "resolver": "tsx src/resolver.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
+    "@sooth/lib": "workspace:*"
   }
 }
