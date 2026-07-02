@@ -1,0 +1,21 @@
+# secrets — never commit
+keys/
+.env
+.env.*
+!.env.example
+
+# node
+node_modules/
+.pnpm-store/
+
+# rust
+target/
+Cargo.lock.orig
+
+# next.js
+web/.next/
+web/out/
+
+# misc
+.DS_Store
+*.log

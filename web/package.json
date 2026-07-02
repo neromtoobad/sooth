@@ -1,0 +1,9 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "0.0.1",
+  "description": "sooth dashboard (next.js scaffold lands in phase 4)",
+  "scripts": {
+    "dev": "echo 'dashboard not scaffolded yet — phase 4'"
+  }
+}

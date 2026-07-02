@@ -1,0 +1,10 @@
+{
+  "name": "@sooth/agents",
+  "private": true,
+  "version": "0.0.1",
+  "description": "trader, resolver and consumer agents",
+  "scripts": {
+    "start": "tsx src/run-traders.ts",
+    "resolver": "tsx src/resolver.ts"
+  }
+}

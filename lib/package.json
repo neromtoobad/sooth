@@ -1,0 +1,7 @@
+{
+  "name": "@sooth/lib",
+  "private": true,
+  "version": "0.0.1",
+  "description": "shared typescript client for sooth contracts",
+  "main": "sooth.ts"
+}

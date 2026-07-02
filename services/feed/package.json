@@ -1,0 +1,9 @@
+{
+  "name": "@sooth/feed",
+  "private": true,
+  "version": "0.0.1",
+  "description": "x402-gated market data endpoint",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  }
+}

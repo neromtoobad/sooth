@@ -1,0 +1,9 @@
+{
+  "name": "@sooth/oracle",
+  "private": true,
+  "version": "0.0.1",
+  "description": "x402-gated probability oracle endpoint",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  }
+}

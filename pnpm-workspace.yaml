@@ -1,0 +1,6 @@
+packages:
+  - services/feed
+  - services/oracle
+  - agents
+  - web
+  - lib

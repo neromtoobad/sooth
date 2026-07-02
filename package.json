@@ -1,0 +1,20 @@
+{
+  "name": "sooth",
+  "private": true,
+  "description": "sooth — the market-priced oracle for the agent economy. truth, priced live.",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "feed": "pnpm --filter @sooth/feed start",
+    "oracle": "pnpm --filter @sooth/oracle start",
+    "agents": "pnpm --filter @sooth/agents start",
+    "resolver": "pnpm --filter @sooth/agents resolver",
+    "keygen": "tsx scripts/keygen.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.5",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "casper-js-sdk": "^5.0.12"
+  }
+}
