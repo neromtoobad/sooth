@@ -58,92 +58,226 @@ function useJson<T>(url: string, intervalMs: number, initial: T): T {
 
 function countdown(closeTs: number): string {
   const ms = closeTs - Date.now();
-  if (ms <= 0) return 'closed';
+  if (ms <= 0) return 'CLOSED';
   const h = Math.floor(ms / 3_600_000);
   const m = Math.floor((ms % 3_600_000) / 60_000);
-  if (h >= 48) return `${Math.floor(h / 24)}d ${h % 24}h`;
-  return `${h}h ${m.toString().padStart(2, '0')}m`;
+  if (h >= 48) return `${Math.floor(h / 24)}D ${h % 24}H`;
+  return `${h}H ${m.toString().padStart(2, '0')}M`;
 }
 
 function short(hash: string, n = 8): string {
-  return hash.slice(0, n) + '…';
+  return hash.slice(0, n);
 }
 
 const AGENT_COLORS: Record<string, string> = {
-  momo: 'text-sky-400',
-  meanie: 'text-amber-400',
-  vibes: 'text-fuchsia-400',
-  resolver: 'text-emerald-400',
-  consumer: 'text-teal-300',
-  deployer: 'text-zinc-400',
+  momo: 'text-info',
+  meanie: 'text-amber',
+  vibes: 'text-no',
+  resolver: 'text-yes',
+  consumer: 'text-[#5eead4]',
+  deployer: 'text-ink-dim',
 };
 
+function actionLabel(a: Activity): { text: string; cls: string } {
+  if (a.action === 'buy_yes') return { text: `BUY YES ${a.size?.toFixed(2)} sUSD`, cls: 'text-yes' };
+  if (a.action === 'buy_no') return { text: `BUY NO ${a.size?.toFixed(2)} sUSD`, cls: 'text-no' };
+  if (a.action === 'hold') return { text: 'HOLD', cls: 'text-ink-faint' };
+  if (a.action === 'oracle_read') return { text: 'ORACLE READ', cls: 'text-[#5eead4]' };
+  if (a.action === 'resolving' || a.action === 'resolved')
+    return { text: a.action.toUpperCase(), cls: 'text-amber' };
+  if (a.action === 'claimed') return { text: 'CLAIMED', cls: 'text-yes' };
+  if (a.action === 'error') return { text: 'ERR', cls: 'text-no/70' };
+  return { text: a.action.toUpperCase(), cls: 'text-ink-dim' };
+}
+
+/* ── chart ─────────────────────────────────────────────────────── */
+
 function Chart({ points, resolved }: { points: PricePoint[]; resolved: boolean }) {
-  const { path, lo, hi } = useMemo(() => {
-    if (points.length < 2) return { path: null, lo: 0, hi: 1 };
+  const { path, area, lo, hi, lastXY } = useMemo(() => {
+    if (points.length < 2)
+      return {
+        path: null as string | null,
+        area: null as string | null,
+        lo: 0,
+        hi: 1,
+        lastXY: null as [number, number] | null,
+      };
     const ps = points.map((p) => p.p);
-    const lo = Math.max(0, Math.min(...ps) - 0.05);
-    const hi = Math.min(1, Math.max(...ps) + 0.05);
+    const lo = Math.max(0, Math.min(...ps) - 0.04);
+    const hi = Math.min(1, Math.max(...ps) + 0.04);
     const t0 = points[0].ts;
     const span = Math.max(points[points.length - 1].ts - t0, 1);
-    const coords = points.map((pt) => {
-      const x = ((pt.ts - t0) / span) * 1000;
-      const y = 300 - ((pt.p - lo) / (hi - lo)) * 300;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    });
-    return { path: coords.join(' '), lo, hi };
+    const xy = points.map((pt) => [
+      ((pt.ts - t0) / span) * 1000,
+      300 - ((pt.p - lo) / (hi - lo)) * 280 - 10,
+    ]);
+    const path = xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+    const area = `0,300 ${path} 1000,300`;
+    return { path, area, lo, hi, lastXY: xy[xy.length - 1] as [number, number] };
   }, [points]);
 
-  const gridlines = useMemo(() => {
-    const lines: number[] = [];
-    for (let g = 0.1; g < 1; g += 0.1) {
-      const gr = Math.round(g * 10) / 10;
-      if (gr > lo && gr < hi) lines.push(gr);
-    }
-    return lines;
-  }, [lo, hi]);
+  const color = resolved ? '#8a877e' : '#f5b800';
 
   return (
     <div className="relative">
-      <svg viewBox="0 0 1000 300" className="h-56 w-full" preserveAspectRatio="none">
-        {gridlines.map((g) => (
+      <svg viewBox="0 0 1000 300" className="h-64 w-full" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.16" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[0.25, 0.5, 0.75].map((f) => (
           <line
-            key={g}
+            key={f}
             x1="0"
             x2="1000"
-            y1={300 - ((g - lo) / (hi - lo)) * 300}
-            y2={300 - ((g - lo) / (hi - lo)) * 300}
-            stroke="#27272a"
+            y1={300 - f * 280 - 10}
+            y2={300 - f * 280 - 10}
+            stroke="#262624"
             strokeWidth="1"
+            strokeDasharray="2 6"
           />
         ))}
+        {path && <polygon points={area!} fill="url(#fill)" />}
         {path ? (
-          <polyline
-            points={path}
-            fill="none"
-            stroke={resolved ? '#71717a' : '#10b981'}
-            strokeWidth="2.5"
-            vectorEffect="non-scaling-stroke"
-          />
+          <>
+            <polyline
+              points={path}
+              fill="none"
+              stroke={color}
+              strokeWidth="2"
+              vectorEffect="non-scaling-stroke"
+            />
+            {lastXY && !resolved && (
+              <circle cx={lastXY[0]} cy={lastXY[1]} r="4" fill={color} className="live-dot" />
+            )}
+          </>
         ) : (
-          <text x="500" y="150" textAnchor="middle" fill="#52525b" fontSize="16">
-            waiting for observations…
+          <text
+            x="500"
+            y="150"
+            textAnchor="middle"
+            fill="#55534c"
+            fontSize="13"
+            fontFamily="var(--font-mono)"
+          >
+            AWAITING OBSERVATIONS
           </text>
         )}
       </svg>
       {path && (
         <>
-          <span className="absolute right-1 top-0 text-[10px] text-zinc-600">
-            {(hi * 100).toFixed(0)}%
+          <span className="absolute right-2 top-1 font-mono text-[10px] text-ink-faint">
+            {(hi * 100).toFixed(0)}
           </span>
-          <span className="absolute bottom-0 right-1 text-[10px] text-zinc-600">
-            {(lo * 100).toFixed(0)}%
+          <span className="absolute bottom-1 right-2 font-mono text-[10px] text-ink-faint">
+            {(lo * 100).toFixed(0)}
           </span>
         </>
+      )}
+      {resolved && (
+        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border border-line-strong px-4 py-1 font-mono text-xs tracking-[0.3em] text-ink-faint">
+          RESOLVED
+        </span>
       )}
     </div>
   );
 }
+
+/* ── market card ───────────────────────────────────────────────── */
+
+function MarketCard({
+  m,
+  idx,
+  active,
+  onSelect,
+}: {
+  m: Market;
+  idx: number;
+  active: boolean;
+  onSelect: () => void;
+}) {
+  let noShare = 0.5;
+  try {
+    const yes = Number(BigInt(m.yesPool) / 1000000n);
+    const no = Number(BigInt(m.noPool) / 1000000n);
+    if (yes + no > 0) noShare = no / (yes + no); // p_yes = no/(yes+no)
+  } catch {
+    /* negative/malformed pools from partial event reads — keep 50/50 */
+  }
+
+  return (
+    <button
+      onClick={onSelect}
+      className={`group relative cursor-pointer border bg-surface p-0 text-left transition-colors duration-200 ${
+        active ? 'border-amber-dim' : 'border-line hover:border-line-strong'
+      }`}
+    >
+      {active && <span className="absolute left-0 top-0 h-full w-[2px] bg-amber" />}
+      <div className="flex items-center justify-between border-b border-line px-4 py-2">
+        <span className="font-mono text-[10px] tracking-[0.25em] text-ink-faint">
+          MARKET {String(idx + 1).padStart(2, '0')} · {short(m.hash)}
+        </span>
+        {m.resolved ? (
+          <span
+            className={`border px-2 py-0.5 font-mono text-[10px] font-bold tracking-widest ${
+              m.outcome ? 'border-yes/40 text-yes' : 'border-no/40 text-no'
+            }`}
+          >
+            {m.outcome ? 'YES' : 'NO'}
+          </span>
+        ) : (
+          <span className="font-mono text-[10px] tracking-widest text-ink-dim">
+            {m.closeTs > Date.now() ? `T-${countdown(m.closeTs)}` : 'CLOSED · RESOLVING'}
+          </span>
+        )}
+      </div>
+
+      <div className="px-4 pb-4 pt-3">
+        <p className="min-h-[2.5rem] text-sm leading-snug text-ink">{m.question}</p>
+        <div className="mt-3 flex items-end justify-between">
+          <div>
+            <span className="font-mono text-[10px] tracking-[0.25em] text-ink-faint">P(YES)</span>
+            <div
+              className={`font-mono text-5xl font-bold tabular-nums leading-none ${
+                m.resolved ? 'text-ink-dim' : 'text-amber'
+              }`}
+            >
+              {(m.pYes * 100).toFixed(1)}
+              <span className="text-2xl">%</span>
+            </div>
+          </div>
+          <div className="text-right font-mono text-[10px] leading-relaxed text-ink-faint">
+            <div>{m.trades} TRADES</div>
+            <a
+              href={`${EXPLORER}/contract-package/${m.hash}`}
+              target="_blank"
+              onClick={(e) => e.stopPropagation()}
+              className="text-ink-dim underline-offset-2 hover:text-amber hover:underline"
+            >
+              CONTRACT ↗
+            </a>
+          </div>
+        </div>
+
+        {/* YES / NO pool split */}
+        <div className="mt-3">
+          <div className="flex h-1 overflow-hidden">
+            <div className="bg-yes/70" style={{ width: `${noShare * 100}%` }} />
+            <div className="bg-no/60" style={{ width: `${(1 - noShare) * 100}%` }} />
+          </div>
+          <div className="mt-1 flex justify-between font-mono text-[9px] tracking-widest text-ink-faint">
+            <span>YES {(noShare * 100).toFixed(0)}</span>
+            <span>NO {((1 - noShare) * 100).toFixed(0)}</span>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/* ── page ──────────────────────────────────────────────────────── */
 
 export default function Dashboard() {
   const markets = useJson<Market[]>('/api/markets', 10_000, []);
@@ -158,190 +292,229 @@ export default function Dashboard() {
   );
   const activeMarket = markets.find((m) => m.hash === active);
 
+  const stats = useMemo(() => {
+    const payments = activity.filter((a) => a.x402_payment).length;
+    const trades = markets.reduce((s, m) => s + m.trades, 0);
+    const spot = activity.find((a) => typeof a.spot === 'number')?.spot;
+    return { payments, trades, spot };
+  }, [activity, markets]);
+
+  const feed = useMemo(
+    () =>
+      activity
+        .filter((a) => a.action !== 'error' || !(a.error ?? '').match(/Network|429/))
+        .slice(0, 80),
+    [activity],
+  );
+
   return (
-    <main className="mx-auto max-w-6xl px-6 py-8">
+    <main className="mx-auto max-w-6xl px-5 py-6">
       {/* header */}
-      <header className="mb-8 flex items-baseline justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-amber/80 pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            SOOTH <span className="font-normal text-zinc-500">— truth, priced live</span>
+          <h1 className="font-mono text-3xl font-bold tracking-tight text-ink">
+            SOOTH<span className="block-cursor text-amber">▮</span>
           </h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            market-priced oracle for the agent economy · casper testnet · every trade, payment and
-            resolution is a real on-chain transaction
+          <p className="mt-1 font-[family-name:var(--font-display)] text-sm text-ink-dim">
+            truth, priced live — the market-priced oracle for the agent economy
           </p>
         </div>
-        <a
-          href={EXPLORER}
-          target="_blank"
-          className="text-xs text-zinc-500 hover:text-emerald-400"
-        >
-          testnet.cspr.live ↗
-        </a>
+        <div className="flex items-center gap-5 font-mono text-[11px] tracking-widest">
+          <span className="flex items-center gap-2 text-yes">
+            <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-yes" />
+            LIVE
+          </span>
+          <span className="text-ink-faint">CASPER TESTNET</span>
+          <a
+            href={EXPLORER}
+            target="_blank"
+            className="text-ink-dim transition-colors hover:text-amber"
+          >
+            EXPLORER ↗
+          </a>
+        </div>
       </header>
 
+      {/* ticker strip */}
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-1 border-b border-line py-2 font-mono text-[11px] tracking-wider text-ink-dim">
+        {stats.spot && (
+          <span>
+            BTC/USD <span className="text-ink">{stats.spot.toLocaleString()}</span>
+          </span>
+        )}
+        <span>
+          ON-CHAIN TRADES <span className="text-ink">{stats.trades}</span>
+        </span>
+        <span>
+          X402 PAYMENTS <span className="text-amber">{stats.payments}</span>
+          <span className="text-ink-faint"> (LAST {activity.length})</span>
+        </span>
+        <span className="hidden text-ink-faint sm:inline">
+          EVERY TRADE · PAYMENT · RESOLUTION = REAL TX
+        </span>
+      </div>
+
       {/* market cards */}
-      <section className="mb-6 grid gap-4 sm:grid-cols-2">
-        {markets.map((m) => (
-          <button
+      <section className="mt-5 grid gap-3 sm:grid-cols-2">
+        {markets.map((m, i) => (
+          <MarketCard
             key={m.hash}
-            onClick={() => setSelected(m.hash)}
-            className={`rounded-xl border p-5 text-left transition ${
-              m.hash === active
-                ? 'border-emerald-600 bg-zinc-900'
-                : 'border-zinc-800 bg-zinc-900/50 hover:border-zinc-600'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <p className="text-sm leading-snug text-zinc-300">{m.question}</p>
-              {m.resolved ? (
-                <span
-                  className={`rounded px-2 py-0.5 text-xs font-semibold ${
-                    m.outcome ? 'bg-emerald-900 text-emerald-300' : 'bg-rose-950 text-rose-300'
-                  }`}
-                >
-                  {m.outcome ? 'YES' : 'NO'}
-                </span>
-              ) : (
-                <span className="whitespace-nowrap text-xs text-zinc-500">
-                  {m.closeTs > Date.now() ? `closes ${countdown(m.closeTs)}` : 'closed · resolving…'}
-                </span>
-              )}
-            </div>
-            <div className="mt-3 flex items-end justify-between">
-              <span
-                className={`text-4xl font-bold tabular-nums ${
-                  m.resolved ? 'text-zinc-500' : 'text-emerald-400'
-                }`}
-              >
-                {(m.pYes * 100).toFixed(1)}%
-              </span>
-              <span className="text-xs text-zinc-500">
-                {m.trades} trades ·{' '}
-                <a
-                  href={`${EXPLORER}/contract-package/${m.hash}`}
-                  target="_blank"
-                  onClick={(e) => e.stopPropagation()}
-                  className="hover:text-emerald-400"
-                >
-                  {short(m.hash)}
-                </a>
-              </span>
-            </div>
-          </button>
+            m={m}
+            idx={i}
+            active={m.hash === active}
+            onSelect={() => setSelected(m.hash)}
+          />
         ))}
+        {markets.length === 0 && (
+          <div className="border border-line bg-surface p-6 font-mono text-xs text-ink-faint">
+            LOADING MARKETS…
+          </div>
+        )}
       </section>
 
       {/* chart */}
-      <section className="mb-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
-        <div className="mb-2 flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-zinc-400">
-            p(YES) — {activeMarket ? activeMarket.question : '…'}
+      <section className="mt-5 border border-line bg-surface">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-4 py-2">
+          <h2 className="font-mono text-[11px] tracking-[0.25em] text-ink-dim">
+            P(YES) · <span className="text-ink">{activeMarket?.question ?? '…'}</span>
           </h2>
-          <span className="text-xs text-zinc-600">agents&apos; paid observations · 0–100%</span>
+          <span className="font-mono text-[10px] tracking-widest text-ink-faint">
+            AGENTS&apos; PAID OBSERVATIONS
+          </span>
         </div>
-        <Chart points={history} resolved={activeMarket?.resolved ?? false} />
+        <div className="px-2 py-2">
+          <Chart points={history} resolved={activeMarket?.resolved ?? false} />
+        </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        {/* activity feed */}
+      <div className="mt-5 grid gap-5 lg:grid-cols-5">
+        {/* activity log */}
         <section className="lg:col-span-3">
-          <h2 className="mb-3 text-sm font-semibold text-zinc-400">agent activity</h2>
-          <div className="max-h-[32rem] space-y-1.5 overflow-y-auto pr-1">
-            {activity
-              .filter((a) => a.action !== 'error' || !a.error?.includes('Network'))
-              .slice(0, 60)
-              .map((a, i) => (
-                <div
-                  key={`${a.ts}-${i}`}
-                  className="rounded-lg border border-zinc-800/70 bg-zinc-900/40 px-3 py-2 text-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`font-bold ${AGENT_COLORS[a.agent] ?? 'text-zinc-300'}`}>
-                      {a.agent}
-                    </span>
-                    <span
-                      className={
-                        a.action.startsWith('buy')
-                          ? 'font-semibold text-emerald-300'
-                          : a.action === 'error'
-                            ? 'text-rose-400'
-                            : 'text-zinc-400'
-                      }
-                    >
-                      {a.action}
-                      {a.size ? ` ${a.size.toFixed(2)} sUSD` : ''}
-                    </span>
-                    {typeof a.p_yes === 'number' && (
-                      <span className="text-zinc-500">p={(a.p_yes * 100).toFixed(1)}%</span>
+          <div className="border border-line bg-surface">
+            <div className="flex items-center justify-between border-b border-line px-4 py-2">
+              <h2 className="font-mono text-[11px] tracking-[0.25em] text-ink-dim">
+                AGENT ACTIVITY LOG
+              </h2>
+              <span className="font-mono text-[10px] text-ink-faint">tail -f activity.jsonl</span>
+            </div>
+            <div className="terminal-scroll max-h-[30rem] overflow-y-auto px-1 py-1">
+              {feed.map((a, i) => {
+                const act = actionLabel(a);
+                return (
+                  <div
+                    key={`${a.ts}-${i}`}
+                    className="border-b border-line/40 px-3 py-2 font-mono text-[11px] leading-relaxed last:border-0 hover:bg-surface-2"
+                  >
+                    <div className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="text-ink-faint">
+                        {new Date(a.ts).toLocaleTimeString('en-GB', { hour12: false })}
+                      </span>
+                      <span className={`font-bold ${AGENT_COLORS[a.agent] ?? 'text-ink'}`}>
+                        [{a.agent.toUpperCase()}]
+                      </span>
+                      <span className={`font-bold ${act.cls}`}>{act.text}</span>
+                      {typeof a.p_yes === 'number' && (
+                        <span className="text-ink-dim">p={(a.p_yes * 100).toFixed(1)}%</span>
+                      )}
+                      {typeof a.spot === 'number' && (
+                        <span className="text-ink-faint">btc={a.spot.toLocaleString()}</span>
+                      )}
+                    </div>
+                    {(a.thesis ?? a.decision ?? a.signal) && (
+                      <p className="mt-0.5 text-ink-faint">{a.thesis ?? a.decision ?? a.signal}</p>
                     )}
-                    <span className="ml-auto text-zinc-600">
-                      {new Date(a.ts).toLocaleTimeString('en-GB', { hour12: false })}
-                    </span>
+                    {(a.txHash || a.x402_payment) && (
+                      <div className="mt-1 flex gap-2">
+                        {a.txHash && (
+                          <a
+                            href={`${EXPLORER}/transaction/${a.txHash}`}
+                            target="_blank"
+                            className="border border-line px-1.5 py-0.5 text-[9px] tracking-widest text-ink-dim transition-colors hover:border-amber-dim hover:text-amber"
+                          >
+                            TX {short(a.txHash, 6)} ↗
+                          </a>
+                        )}
+                        {a.x402_payment && (
+                          <a
+                            href={`${EXPLORER}/transaction/${a.x402_payment}`}
+                            target="_blank"
+                            className="border border-line px-1.5 py-0.5 text-[9px] tracking-widest text-ink-dim transition-colors hover:border-info hover:text-info"
+                          >
+                            X402 {short(a.x402_payment, 6)} ↗
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {(a.signal || a.thesis || a.decision) && (
-                    <p className="mt-1 text-zinc-500">{a.thesis ?? a.decision ?? a.signal}</p>
-                  )}
-                  <div className="mt-1 flex gap-3 text-[11px] text-zinc-600">
-                    {a.txHash && (
-                      <a
-                        href={`${EXPLORER}/transaction/${a.txHash}`}
-                        target="_blank"
-                        className="hover:text-emerald-400"
-                      >
-                        trade tx {short(a.txHash)} ↗
-                      </a>
-                    )}
-                    {a.x402_payment && (
-                      <a
-                        href={`${EXPLORER}/transaction/${a.x402_payment}`}
-                        target="_blank"
-                        className="hover:text-sky-400"
-                      >
-                        x402 payment {short(a.x402_payment)} ↗
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            {activity.length === 0 && (
-              <p className="text-xs text-zinc-600">no activity yet — agents warming up</p>
-            )}
+                );
+              })}
+              {feed.length === 0 && (
+                <p className="px-3 py-4 font-mono text-[11px] text-ink-faint">
+                  NO ACTIVITY YET — AGENTS WARMING UP
+                </p>
+              )}
+            </div>
           </div>
         </section>
 
         {/* oracle panel */}
         <section className="lg:col-span-2">
-          <h2 className="mb-3 text-sm font-semibold text-zinc-400">consume this oracle</h2>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-xs leading-relaxed text-zinc-400">
-            <p>
-              the live probability <em>is</em> the product. any agent can buy a read with an x402
-              micropayment in sUSD — no account, no API key, just a wallet:
-            </p>
-            <pre className="mt-3 overflow-x-auto rounded-lg bg-black/60 p-3 text-[11px] text-zinc-300">
-              {`$ curl sooth-oracle/oracle/${short(active ?? '', 10)}
-→ 402 Payment Required
-  (PAYMENT-REQUIRED header: price, asset, payTo)
-
-$ # client signs an sUSD transfer authorization
-$ # and retries with PAYMENT-SIGNATURE …
-→ 200 OK  { "p_yes": ${activeMarket ? activeMarket.pYes.toFixed(3) : '0.500'}, … }
-  settlement lands on-chain, receipt in
-  the PAYMENT-RESPONSE header`}
-            </pre>
-            <p className="mt-3">
-              x402 is used twice: agents <span className="text-sky-300">pay for data in</span>{' '}
-              (price feed) and <span className="text-teal-300">pay for truth out</span> (this
-              oracle). attestation oracles say &quot;trust my signature.&quot; sooth prices truth
-              with skin in the game.
-            </p>
-            <div className="mt-3 border-t border-zinc-800 pt-3 text-[11px] text-zinc-500">
-              stack: odra contracts · casper x402 + facilitator · cspr.cloud · casper-js-sdk ·
-              testnet receipts for everything
+          <div className="border border-line bg-surface">
+            <div className="flex items-center gap-2 border-b border-line px-4 py-2">
+              <span className="flex gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-no/60" />
+                <span className="h-2 w-2 rounded-full bg-amber/60" />
+                <span className="h-2 w-2 rounded-full bg-yes/60" />
+              </span>
+              <h2 className="font-mono text-[11px] tracking-[0.25em] text-ink-dim">
+                CONSUME THIS ORACLE
+              </h2>
+            </div>
+            <div className="space-y-3 px-4 py-4 text-xs leading-relaxed text-ink-dim">
+              <p>
+                the live probability <em className="text-ink">is</em> the product. any agent can
+                buy a read with an x402 micropayment in sUSD — no account, no API key, just a
+                wallet:
+              </p>
+              <pre className="overflow-x-auto border border-line bg-bg p-3 font-mono text-[10px] leading-relaxed text-ink-dim">
+                <span className="text-ink">$ curl sooth/oracle/{short(active ?? '', 10)}…</span>
+                {'\n'}
+                <span className="text-no">← 402 PAYMENT REQUIRED</span>
+                {'\n'}
+                {'   asset: sUSD · price: 1/call · payTo: sooth'}
+                {'\n\n'}
+                <span className="text-ink-faint"># client signs sUSD transfer authorization</span>
+                {'\n'}
+                <span className="text-ink-faint"># retries with PAYMENT-SIGNATURE header</span>
+                {'\n'}
+                <span className="text-yes">
+                  ← 200 OK {'{'} &quot;p_yes&quot;:{' '}
+                  {activeMarket ? activeMarket.pYes.toFixed(3) : '0.500'} {'}'}
+                </span>
+                {'\n'}
+                {'   settlement lands on-chain'}
+              </pre>
+              <p>
+                x402 runs <span className="text-ink">twice</span>: agents{' '}
+                <span className="text-info">pay for data in</span> (price feed) and{' '}
+                <span className="text-[#5eead4]">pay for truth out</span> (this oracle).
+              </p>
+              <p className="border-l-2 border-amber/60 pl-3 text-ink">
+                attestation oracles say &quot;trust my signature.&quot; sooth prices truth with
+                skin in the game.
+              </p>
+              <div className="border-t border-line pt-3 font-mono text-[9px] tracking-wider text-ink-faint">
+                ODRA CONTRACTS · CASPER X402 + FACILITATOR · CSPR.CLOUD · CASPER-JS-SDK
+              </div>
             </div>
           </div>
         </section>
       </div>
+
+      <footer className="mt-8 flex flex-wrap justify-between gap-2 border-t border-line pt-3 font-mono text-[10px] tracking-widest text-ink-faint">
+        <span>SOOTH · CASPER AGENTIC BUILDATHON 2026</span>
+        <span>TRADER AGENTS: MOMO · MEANIE · VIBES — RESOLVER · CONSUMER</span>
+      </footer>
     </main>
   );
 }
