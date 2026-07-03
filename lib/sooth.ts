@@ -162,7 +162,7 @@ export class SoothClient {
         close_ts: CLValue.newCLUint64(closeTs),
         resolver: await accountKey(resolverAccountHash),
       }),
-      paymentMotes: 700_000_000_000, // market creation deploys a full child contract (~install cost)
+      paymentMotes: 680_000_000_000, // market creation deploys a full child contract (~install cost)
       timeoutMs: 240_000,
     });
     return out.txHash;
