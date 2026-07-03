@@ -1,10 +1,26 @@
 {
-  "name": "web",
+  "name": "@sooth/web",
   "private": true,
   "version": "0.0.1",
-  "description": "sooth dashboard (next.js scaffold lands in phase 4)",
+  "description": "sooth dashboard — truth, priced live",
+  "type": "module",
   "scripts": {
-    "dev": "echo 'dashboard not scaffolded yet — phase 4'"
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000"
   },
-  "type": "module"
+  "dependencies": {
+    "@make-software/ces-js-parser": "^2.1.1",
+    "casper-js-sdk": "^5.0.12",
+    "next": "^15.4.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.6.0"
+  }
 }

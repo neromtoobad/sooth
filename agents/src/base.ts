@@ -125,6 +125,7 @@ export async function runAgent(
       logActivity({
         agent: cfg.name,
         action: decision.action,
+        market: cfg.marketHash,
         signal: decision.signal,
         size,
         p_yes: pYes,
