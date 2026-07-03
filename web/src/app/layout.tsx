@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
+import { Chrome } from '@/components/chrome';
 import './globals.css';
 
 const spaceGrotesk = Space_Grotesk({
@@ -35,7 +36,16 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
-      <body className="scanlines antialiased">{children}</body>
+      <body className="scanlines antialiased">
+        <div className="mx-auto max-w-6xl px-5 py-6">
+          <Chrome />
+          <main>{children}</main>
+          <footer className="mt-8 flex flex-wrap justify-between gap-2 border-t border-line pt-3 font-mono text-[10px] tracking-widest text-ink-faint">
+            <span>SOOTH · CASPER AGENTIC BUILDATHON 2026</span>
+            <span>TRADERS: MOMO · MEANIE · VIBES · BULL · BEAR — RESOLVER · CONSUMER</span>
+          </footer>
+        </div>
+      </body>
     </html>
   );
 }

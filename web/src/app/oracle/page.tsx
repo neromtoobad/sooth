@@ -1,0 +1,139 @@
+'use client';
+
+import { short, useJson, type Economy, type Market } from '@/lib/shared';
+
+export default function OraclePage() {
+  const markets = useJson<Market[]>('/api/markets', 15_000, []);
+  const economy = useJson<Economy | null>('/api/economy', 30_000, null);
+  const active = markets.find((m) => !m.resolved) ?? markets[0];
+
+  return (
+    <>
+      {/* economy stats */}
+      <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          {
+            label: 'PROTOCOL REVENUE',
+            value: economy ? `${economy.x402Revenue.toFixed(1)} sUSD` : '…',
+            sub: 'x402 micropayments, settled on-chain',
+            accent: true,
+          },
+          {
+            label: 'PAID API CALLS',
+            value: economy ? String(economy.x402Payments) : '…',
+            sub: 'feed reads + oracle reads',
+            accent: false,
+          },
+          {
+            label: 'TRADING FEES',
+            value: economy ? `${economy.tradingFees.toFixed(2)} sUSD` : '…',
+            sub: '1% on every buy, accrues to markets',
+            accent: false,
+          },
+          {
+            label: 'MARKETS',
+            value: economy ? `${economy.markets} / ${economy.resolved} RESOLVED` : '…',
+            sub: 'deterministic, dual-source resolution',
+            accent: false,
+          },
+        ].map((s) => (
+          <div key={s.label} className="border border-line bg-surface p-4">
+            <div className="font-mono text-[9px] tracking-[0.25em] text-ink-faint">{s.label}</div>
+            <div
+              className={`mt-1 font-mono text-2xl font-bold tabular-nums ${
+                s.accent ? 'text-amber' : 'text-ink'
+              }`}
+            >
+              {s.value}
+            </div>
+            <div className="mt-1 text-[10px] text-ink-faint">{s.sub}</div>
+          </div>
+        ))}
+      </section>
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        {/* how to consume */}
+        <section className="border border-line bg-surface">
+          <div className="flex items-center gap-2 border-b border-line px-4 py-2">
+            <span className="flex gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-no/60" />
+              <span className="h-2 w-2 rounded-full bg-amber/60" />
+              <span className="h-2 w-2 rounded-full bg-yes/60" />
+            </span>
+            <h2 className="font-mono text-[11px] tracking-[0.25em] text-ink-dim">
+              CONSUME THIS ORACLE
+            </h2>
+          </div>
+          <div className="space-y-3 px-4 py-4 text-xs leading-relaxed text-ink-dim">
+            <p>
+              the live probability <em className="text-ink">is</em> the product. any agent can buy
+              a read with an x402 micropayment in sUSD — no account, no API key, just a wallet:
+            </p>
+            <pre className="overflow-x-auto border border-line bg-bg p-3 font-mono text-[10px] leading-relaxed text-ink-dim">
+              <span className="text-ink">
+                $ curl sooth/oracle/{short(active?.hash ?? '', 10)}…
+              </span>
+              {'\n'}
+              <span className="text-no">← 402 PAYMENT REQUIRED</span>
+              {'\n'}
+              {'   asset: sUSD · price: 1/call · payTo: sooth'}
+              {'\n\n'}
+              <span className="text-ink-faint"># client signs sUSD transfer authorization</span>
+              {'\n'}
+              <span className="text-ink-faint"># retries with PAYMENT-SIGNATURE header</span>
+              {'\n'}
+              <span className="text-yes">
+                ← 200 OK {'{'} &quot;p_yes&quot;: {active ? active.pYes.toFixed(3) : '0.500'}{' '}
+                {'}'}
+              </span>
+              {'\n'}
+              {'   settlement lands on-chain'}
+            </pre>
+            <p>
+              x402 runs <span className="text-ink">twice</span>: agents{' '}
+              <span className="text-info">pay for data in</span> (price feed) and{' '}
+              <span className="text-[#5eead4]">pay for truth out</span> (this oracle).
+            </p>
+          </div>
+        </section>
+
+        {/* why market-priced truth */}
+        <section className="border border-line bg-surface">
+          <div className="border-b border-line px-4 py-2">
+            <h2 className="font-mono text-[11px] tracking-[0.25em] text-ink-dim">
+              WHY A MARKET, NOT A SIGNATURE
+            </h2>
+          </div>
+          <div className="space-y-3 px-4 py-4 text-xs leading-relaxed text-ink-dim">
+            <p className="border-l-2 border-amber/60 pl-3 text-ink">
+              attestation oracles say &quot;trust my signature.&quot; sooth prices truth with skin
+              in the game.
+            </p>
+            <ul className="space-y-2">
+              <li>
+                <span className="text-ink">wrong beliefs cost money.</span> an agent that misprices
+                a market funds the agents that price it right — the leaderboard is the proof.
+              </li>
+              <li>
+                <span className="text-ink">the price aggregates everything.</span> momentum
+                models, mean-reversion, LLM reasoning over headlines — every buy moves p(YES).
+              </li>
+              <li>
+                <span className="text-ink">resolution is deterministic.</span> two independent
+                price sources must agree within 0.5% before the resolver posts the outcome
+                on-chain.
+              </li>
+              <li>
+                <span className="text-ink">the oracle funds itself.</span> data fees in, oracle
+                fees out — revenue accrues in sUSD with every call.
+              </li>
+            </ul>
+            <div className="border-t border-line pt-3 font-mono text-[9px] tracking-wider text-ink-faint">
+              ODRA CONTRACTS · CASPER X402 + FACILITATOR · CSPR.CLOUD · CASPER-JS-SDK
+            </div>
+          </div>
+        </section>
+      </div>
+    </>
+  );
+}
