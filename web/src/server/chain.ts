@@ -198,6 +198,28 @@ export async function marketView(meta: MarketMeta): Promise<MarketView> {
     console.error(`marketView(${meta.hash.slice(0, 8)}) read failed:`, e);
   }
 
+  // rpc gave us nothing usable — synthesize from the agents' activity log,
+  // which records every observation, trade and resolution with timestamps
+  if (trades === 0) {
+    const log = readActivity(2000).filter(
+      (e) => e.market === meta.hash || (!e.market && meta === loadMarkets()[0]),
+    );
+    const lastObs = log.find((e) => typeof e.p_yes === 'number');
+    const logTrades = log.filter((e) => e.action === 'buy_yes' || e.action === 'buy_no').length;
+    const resolvedEntry = log.find((e) => e.action === 'resolved');
+    if (lastObs || resolvedEntry) {
+      return {
+        ...meta,
+        pYes: (lastObs?.p_yes as number) ?? 0.5,
+        yesPool: '0',
+        noPool: '0',
+        resolved: Boolean(resolvedEntry),
+        outcome: resolvedEntry ? Boolean((resolvedEntry as { outcome?: boolean }).outcome) : null,
+        trades: logTrades,
+      };
+    }
+  }
+
   return {
     ...meta,
     pYes: pYesNano / 1e9,
