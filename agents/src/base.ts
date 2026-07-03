@@ -62,10 +62,22 @@ export function logistic(x: number): number {
   return 1 / (1 + Math.exp(-x));
 }
 
+export function installCrashGuards(agent: string) {
+  // casper-js-sdk's waitForTransaction can throw its Timeout from a raw timer
+  // callback, bypassing try/catch — log and keep the loop alive
+  process.on('uncaughtException', (e) => {
+    logActivity({ agent, action: 'error', error: `uncaught: ${String(e)}` });
+  });
+  process.on('unhandledRejection', (e) => {
+    logActivity({ agent, action: 'error', error: `unhandled: ${String(e)}` });
+  });
+}
+
 export async function runAgent(
   cfg: AgentConfig,
   decide: (ctx: AgentContext) => Decision,
 ): Promise<never> {
+  installCrashGuards(cfg.name);
   if (!cfg.marketHash) throw new Error('MARKET_HASH env required');
   if (!cfg.strike) throw new Error('STRIKE env required');
 

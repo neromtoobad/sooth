@@ -39,9 +39,22 @@ function strikeFromQuestion(question: string): number {
   return Number(m[1]);
 }
 
+async function claimForAll(marketHash: string) {
+  for (const name of ['deployer', 'momo', 'meanie', 'vibes']) {
+    try {
+      const agentClient = await SoothClient.connect(pemPathFor(name));
+      const claimTx = await agentClient.claim(marketHash);
+      logActivity({ agent: name, action: 'claimed', market: marketHash, txHash: claimTx });
+    } catch (e) {
+      // NothingToClaim is expected for losers — log and continue
+      logActivity({ agent: name, action: 'claim_skipped', market: marketHash, note: String(e) });
+    }
+  }
+}
+
 async function main() {
   const client = await SoothClient.connect(pemPathFor('resolver'));
-  const resolvedAlready = new Set<string>();
+  const handled = new Set<string>(); // markets fully resolved AND claims attempted
 
   logActivity({ agent: 'resolver', action: 'start' });
 
@@ -49,46 +62,35 @@ async function main() {
     try {
       const { markets } = loadDeployments();
       for (const market of markets) {
-        if (resolvedAlready.has(market.hash)) continue;
+        if (handled.has(market.hash)) continue;
         if (Date.now() < market.closeTs) continue;
 
         const info = await client.marketInfo(market.hash);
-        if (info.resolved) {
-          resolvedAlready.add(market.hash);
-          continue;
+        if (!info.resolved) {
+          const price = await deterministicBtc();
+          // strike recorded at creation in deployments.json is the source of truth;
+          // question parsing is the fallback for markets registered elsewhere
+          const strike =
+            (market as { strike?: number }).strike ?? strikeFromQuestion(market.question);
+          const outcome = price > strike;
+
+          logActivity({
+            agent: 'resolver',
+            action: 'resolving',
+            market: market.hash,
+            price,
+            strike,
+            outcome,
+          });
+
+          const txHash = await client.resolve(market.hash, outcome);
+          logActivity({ agent: 'resolver', action: 'resolved', market: market.hash, outcome, txHash });
         }
 
-        const price = await deterministicBtc();
-        // strike recorded at creation in deployments.json is the source of truth;
-        // question parsing is the fallback for markets registered elsewhere
-        const strike =
-          (market as { strike?: number }).strike ?? strikeFromQuestion(market.question);
-        const outcome = price > strike;
-
-        logActivity({
-          agent: 'resolver',
-          action: 'resolving',
-          market: market.hash,
-          price,
-          strike,
-          outcome,
-        });
-
-        const txHash = await client.resolve(market.hash, outcome);
-        resolvedAlready.add(market.hash);
-        logActivity({ agent: 'resolver', action: 'resolved', market: market.hash, outcome, txHash });
-
-        // trigger claims for every agent key holding winning shares
-        for (const name of ['deployer', 'momo', 'meanie', 'vibes']) {
-          try {
-            const agentClient = await SoothClient.connect(pemPathFor(name));
-            const claimTx = await agentClient.claim(market.hash);
-            logActivity({ agent: name, action: 'claimed', market: market.hash, txHash: claimTx });
-          } catch (e) {
-            // NothingToClaim is expected for losers — log and continue
-            logActivity({ agent: name, action: 'claim_skipped', market: market.hash, note: String(e) });
-          }
-        }
+        // claims run whether we just resolved or found it already resolved
+        // (idempotent: double claims revert with NothingToClaim and get logged)
+        await claimForAll(market.hash);
+        handled.add(market.hash);
       }
     } catch (e) {
       logActivity({ agent: 'resolver', action: 'error', error: String(e) });
@@ -96,5 +98,14 @@ async function main() {
     await new Promise((r) => setTimeout(r, POLL_MS));
   }
 }
+
+// casper-js-sdk's waitForTransaction can throw its Timeout from a raw timer
+// callback, which bypasses try/catch — keep the resolver alive through those
+process.on('uncaughtException', (e) => {
+  logActivity({ agent: 'resolver', action: 'error', error: `uncaught: ${String(e)}` });
+});
+process.on('unhandledRejection', (e) => {
+  logActivity({ agent: 'resolver', action: 'error', error: `unhandled: ${String(e)}` });
+});
 
 main();
