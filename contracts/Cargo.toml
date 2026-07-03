@@ -9,6 +9,7 @@ odra-modules = { version = "2.8.0", default-features = false }
 
 [dev-dependencies]
 odra-test = { version = "2.8.0", default-features = false }
+blake2 = "0.10"
 
 [build-dependencies]
 odra-build = { version = "2.8.0", default-features = false }

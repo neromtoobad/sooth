@@ -9,3 +9,6 @@ fqn = "sooth_contracts::MarketFactory"
 
 [[contracts]]
 fqn = "sooth_contracts::BinaryMarketFactory"
+
+[[contracts]]
+fqn = "sooth_contracts::TruthStake"

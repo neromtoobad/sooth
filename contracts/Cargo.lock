@@ -2064,6 +2064,7 @@ checksum = "8ed6a63f02c8539c91a8685a86f4099661ba3da017932f6ebbea6de3f0fa7c90"
 name = "sooth_contracts"
 version = "0.1.0"
 dependencies = [
+ "blake2 0.10.6",
  "odra",
  "odra-build",
  "odra-modules",
