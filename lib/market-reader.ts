@@ -105,17 +105,15 @@ async function readEvents(packageHash: string, maxBack = 200): Promise<ParsedEve
   const cached = eventCache.get(packageHash) ?? [];
   if (cached.length >= length) return cached.slice(0, length);
 
-  const from = Math.max(cached.length, length - maxBack);
   const events: ParsedEvent[] = [...cached];
-  for (let i = from; i < length; i++) {
-    const item = await rpc().getDictionaryItem(null, seed, String(i));
-    const cl = item.storedValue.clValue as unknown as { bytes?(): Uint8Array };
-    const raw = cl?.bytes?.();
-    if (!raw || raw.length < 8) {
-      events.push({ name: '__unparsed', data: {} });
-      continue;
-    }
+  // contiguous-prefix reads: stop at the first failure and resume next call,
+  // so flaky rpc responses never poison the cache
+  for (let i = cached.length; i < length; i++) {
     try {
+      const item = await rpc().getDictionaryItem(null, seed, String(i));
+      const cl = item.storedValue.clValue as unknown as { bytes?(): Uint8Array };
+      const raw = cl?.bytes?.();
+      if (!raw || raw.length < 8) throw new Error('empty item');
       // raw = u32 payload-len + payload; payload = u32 name-len + "event_X" + fields
       const payload = raw.slice(4);
       const view = new DataView(payload.buffer, payload.byteOffset);
@@ -126,18 +124,21 @@ async function readEvents(packageHash: string, maxBack = 200): Promise<ParsedEve
       const fields = payload.slice(4 + nameLen);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const schema = (schemas as any)[name];
-      if (!schema) {
-        events.push({ name: '__unparsed', data: {} });
-        continue;
+      if (schema) {
+        const parsedData = parseEventDataFromBytes(schema, fields);
+        const data: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(parsedData ?? {})) {
+          data[k] = String(v);
+        }
+        events.push({ name, data });
+      } else {
+        events.push({ name: '__unknown_schema', data: {} });
       }
-      const parsedData = parseEventDataFromBytes(schema, fields);
-      const data: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(parsedData ?? {})) {
-        data[k] = String(v);
-      }
-      events.push({ name, data });
     } catch {
-      events.push({ name: '__unparsed', data: {} }); // keep index alignment
+      break;
+    }
+    if (length - cached.length > 3) {
+      await new Promise((r) => setTimeout(r, 150));
     }
   }
   eventCache.set(packageHash, events);

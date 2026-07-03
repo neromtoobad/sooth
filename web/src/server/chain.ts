@@ -1,6 +1,6 @@
 // dashboard-local chain reader — same CES event strategy as lib/market-reader.ts
 // but self-contained so next's bundler only sees npm packages (kept external).
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import * as casperSdkNs from 'casper-js-sdk';
 import * as cesParserNs from '@make-software/ces-js-parser';
@@ -56,7 +56,30 @@ export function loadDeploymentInfo(): Record<string, unknown> {
 
 const contractHashCache = new Map<string, string>();
 const schemasCache = new Map<string, unknown>();
-const eventCache = new Map<string, { name: string; data: Record<string, string> }[]>();
+
+// events are immutable — persist them so restarts/reloads never re-backfill
+// (the proxy's rate limit punishes cold re-reads hard)
+const CACHE_FILE = join(process.cwd(), '.market-events-cache.json');
+type CachedEvent = { name: string; data: Record<string, string> };
+const eventCache = new Map<string, CachedEvent[]>(
+  (() => {
+    try {
+      return Object.entries(
+        JSON.parse(readFileSync(CACHE_FILE, 'utf8')) as Record<string, CachedEvent[]>,
+      );
+    } catch {
+      return [];
+    }
+  })(),
+);
+
+function persistEventCache() {
+  try {
+    writeFileSync(CACHE_FILE, JSON.stringify(Object.fromEntries(eventCache)));
+  } catch {
+    /* best effort */
+  }
+}
 
 async function contractHashOf(pkg: string): Promise<string> {
   const hit = contractHashCache.get(pkg);
@@ -97,7 +120,11 @@ async function readEvents(pkg: string) {
 
   const schemas: any = await loadSchemas(contractHash);
   const events = [...cached];
-  for (let i = cached.length; i < length; i++) {
+  const upTo = Math.min(length, cached.length + 12); // cap catch-up per poll
+  // read only the contiguous prefix of successes: a failed read ends this
+  // round and is retried on the next poll, so a flaky rpc can never poison
+  // the cache with permanently-unparsed entries
+  for (let i = cached.length; i < upTo; i++) {
     try {
       const item = await rpc().getDictionaryItem(null, seed, String(i));
       const raw: Uint8Array = item.storedValue.clValue.bytes();
@@ -109,19 +136,26 @@ async function readEvents(pkg: string) {
         .replace(/^event_/, '');
       const fields = payload.slice(4 + nameLen);
       const schema = schemas[name];
-      if (!schema) {
-        events.push({ name: '__unparsed', data: {} });
-        continue;
+      if (schema) {
+        const parsed = parseEventDataFromBytes(schema, fields);
+        const data: Record<string, string> = {};
+        for (const [k, v] of Object.entries(parsed ?? {})) data[k] = String(v);
+        events.push({ name, data });
+      } else {
+        events.push({ name: '__unknown_schema', data: {} });
       }
-      const parsed = parseEventDataFromBytes(schema, fields);
-      const data: Record<string, string> = {};
-      for (const [k, v] of Object.entries(parsed ?? {})) data[k] = String(v);
-      events.push({ name, data });
-    } catch {
-      events.push({ name: '__unparsed', data: {} });
+    } catch (e) {
+      console.error(`readEvents(${pkg.slice(0, 8)}) stopped at index ${i}:`, String(e).slice(0, 200));
+      break; // resume from here next poll
+    }
+    if (upTo - cached.length > 3) {
+      await new Promise((r) => setTimeout(r, 400)); // pace bulk backfill under proxy limits
     }
   }
-  eventCache.set(pkg, events);
+  if (events.length > cached.length) {
+    eventCache.set(pkg, events);
+    persistEventCache();
+  }
   return events;
 }
 
