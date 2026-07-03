@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Copy, Check, Radio } from 'lucide-react';
-import { TickerTabs } from '@/components/chrome';
 import { short, useJson, type Economy, type Market } from '@/lib/shared';
 
 function TerminalFrame({
@@ -54,8 +53,6 @@ export default function OraclePage() {
 
   return (
     <>
-      <TickerTabs />
-
       {/* economy stats */}
       <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[

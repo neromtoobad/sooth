@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Instrument_Serif, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
-import { HeaderBar } from '@/components/chrome';
+import { Ticker, TopNav } from '@/components/chrome';
 import './globals.css';
 
 const spaceGrotesk = Space_Grotesk({
@@ -53,8 +53,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} ${inter.variable} ${instrumentSerif.variable}`}
     >
       <body className="scanlines antialiased">
-        <div className="mx-auto max-w-6xl px-5 py-6">
-          <HeaderBar />
+        <div className="mx-auto max-w-6xl px-5">
+          <TopNav />
+          <Ticker />
           <main>{children}</main>
           <footer className="mt-8 flex flex-wrap justify-between gap-2 border-t border-line pt-3 font-mono text-[10px] tracking-widest text-ink-faint">
             <span>SOOTH · CASPER AGENTIC BUILDATHON 2026</span>

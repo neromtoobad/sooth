@@ -40,7 +40,7 @@ export function Hero() {
   }, []);
 
   return (
-    <section className="relative flex min-h-0 flex-col items-center justify-center overflow-hidden py-14 md:h-[70vh] md:py-0">
+    <section className="relative flex min-h-0 flex-col items-center justify-center overflow-hidden py-10 md:min-h-[52vh] md:py-12">
       {/* optional ambient video */}
       {hasVideo && (
         <>
@@ -59,9 +59,9 @@ export function Hero() {
       {/* central glow */}
       <svg
         className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2"
-        width="1100"
-        height="620"
-        viewBox="0 0 1100 620"
+        width="1000"
+        height="480"
+        viewBox="0 0 1000 480"
         aria-hidden
       >
         <defs>
@@ -74,7 +74,7 @@ export function Hero() {
             <stop offset="100%" stopColor="#2a1f08" stopOpacity="0" />
           </radialGradient>
         </defs>
-        <ellipse cx="550" cy="230" rx="480" ry="190" fill="url(#hero-grad)" filter="url(#hero-blur)" />
+        <ellipse cx="500" cy="180" rx="430" ry="150" fill="url(#hero-grad)" filter="url(#hero-blur)" />
       </svg>
 
       {/* optional texture overlay */}
@@ -95,15 +95,15 @@ export function Hero() {
       </div>
 
       {/* liquid glass live card */}
-      <div className="hero-float glass glass-frame relative z-10 flex h-[180px] w-[180px] flex-col justify-between rounded-2xl p-4 md:h-[220px] md:w-[220px]">
+      <div className="hero-float glass glass-frame relative z-10 flex h-[170px] w-[170px] flex-col justify-between rounded-2xl p-4 md:h-[200px] md:w-[200px]">
         <div className="flex items-start justify-between">
           <span className="font-mono text-[10px] tracking-widest text-amber">
-            [ LIVE · CASPER TESTNET ]
+            [ LIVE · TESTNET ]
           </span>
           <span className="live-dot mt-0.5 h-[6px] w-[6px] shrink-0 rounded-full bg-amber" />
         </div>
         <div>
-          <div className="font-mono text-[44px] font-bold leading-none tabular-nums text-ink md:text-[52px]">
+          <div className="font-mono text-[40px] font-bold leading-none tabular-nums text-ink md:text-[46px]">
             {p.toFixed(1)}
             <span className="text-[22px] text-amber">%</span>
           </div>
@@ -115,7 +115,7 @@ export function Hero() {
       </div>
 
       {/* headline */}
-      <h2 className="relative z-10 mt-8 text-center text-[38px] leading-[1.05] md:text-[72px]">
+      <h2 className="relative z-10 mt-5 text-center text-[34px] leading-[1.05] md:text-[56px]">
         <span className="font-[family-name:var(--font-inter)] font-extrabold uppercase tracking-tight text-ink">
           TRUTH,
         </span>{' '}
@@ -129,13 +129,13 @@ export function Hero() {
       </h2>
 
       {/* subline */}
-      <p className="relative z-10 mx-auto mt-4 max-w-[520px] text-center text-[13px] leading-relaxed text-white/60">
+      <p className="relative z-10 mx-auto mt-3 max-w-[520px] text-center text-[13px] leading-relaxed text-white/60">
         autonomous agents pay to see, trade what they believe, and sell the market&apos;s
         consensus back to the machine economy — every position settled on casper.
       </p>
 
       {/* CTAs */}
-      <div className="relative z-10 mt-7 flex flex-wrap items-center justify-center gap-3">
+      <div className="relative z-10 mt-5 flex flex-wrap items-center justify-center gap-3">
         <Link
           href="/oracle"
           className="flex items-center gap-2 rounded-full bg-amber px-5 py-2.5 text-[12px] font-bold text-bg transition-transform hover:scale-[1.03]"

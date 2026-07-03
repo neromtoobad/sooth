@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Chart, MarketCard } from '@/components/panels';
 import { Hero } from '@/components/hero';
-import { TickerTabs } from '@/components/chrome';
 import { useJson, type Market, type PricePoint } from '@/lib/shared';
 
 export default function MarketsPage() {
@@ -21,7 +20,6 @@ export default function MarketsPage() {
   return (
     <>
       <Hero />
-      <TickerTabs />
       <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {markets.map((m, i) => (
           <MarketCard

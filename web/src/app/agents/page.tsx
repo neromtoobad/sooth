@@ -1,7 +1,6 @@
 'use client';
 
 import { ActivityLog } from '@/components/panels';
-import { TickerTabs } from '@/components/chrome';
 import { AGENT_COLORS, useJson, type Activity, type AgentRow } from '@/lib/shared';
 
 const AGENT_BIOS: Record<string, string> = {
@@ -18,7 +17,6 @@ export default function AgentsPage() {
 
   return (
     <>
-      <TickerTabs />
       <section className="mt-5 border border-line bg-surface">
         <div className="flex items-center justify-between border-b border-line px-4 py-2">
           <h2 className="font-mono text-[11px] tracking-[0.25em] text-ink-dim">

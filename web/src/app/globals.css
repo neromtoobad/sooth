@@ -123,15 +123,15 @@ body {
 @keyframes float-y {
   0%,
   100% {
-    transform: translateY(-36px);
+    transform: translateY(-14px);
   }
   50% {
-    transform: translateY(-24px);
+    transform: translateY(-2px);
   }
 }
 
 .hero-float {
-  transform: translateY(-30px);
+  transform: translateY(-8px);
   animation: float-y 6s ease-in-out infinite;
 }
 
@@ -167,7 +167,7 @@ body {
     animation: none;
   }
   .hero-float {
-    transform: translateY(-30px);
+    transform: translateY(-8px);
   }
 }
 

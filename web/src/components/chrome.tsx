@@ -11,46 +11,62 @@ const TABS = [
   { href: '/oracle', label: 'ORACLE' },
 ];
 
-/** top header only — pages render <TickerTabs/> below (home puts the hero between) */
-export function HeaderBar() {
+/** single sticky top bar: brand · section nav · status */
+export function TopNav() {
+  const pathname = usePathname();
   return (
-    <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-amber/80 pb-4">
-      <Link href="/" className="flex items-center gap-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo.png"
-          alt="SOOTH logo — an eye whose upper lid is a stepped price line"
-          className="h-14 w-14 shrink-0 border border-line object-cover"
-        />
-        <div>
-          <h1 className="font-mono text-3xl font-bold tracking-tight text-ink">
+    <div className="sticky top-0 z-40 -mx-5 border-b border-line bg-bg/90 px-5 backdrop-blur-sm">
+      <div className="mx-auto flex max-w-6xl items-center gap-6">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5 py-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="SOOTH"
+            className="h-8 w-8 border border-line object-cover"
+          />
+          <span className="font-mono text-lg font-bold tracking-tight text-ink">
             SOOTH<span className="block-cursor text-amber">▮</span>
-          </h1>
-          <p className="mt-1 font-[family-name:var(--font-display)] text-sm text-ink-dim">
-            truth, priced live — the market-priced oracle for the agent economy
-          </p>
+          </span>
+        </Link>
+
+        <nav className="flex flex-1 items-center gap-1">
+          {TABS.map((t) => {
+            const active = pathname === t.href;
+            return (
+              <Link
+                key={t.href}
+                href={t.href}
+                className={`relative px-3 py-4 font-mono text-[11px] tracking-[0.2em] transition-colors sm:px-4 ${
+                  active ? 'text-amber' : 'text-ink-dim hover:text-ink'
+                }`}
+              >
+                {t.label}
+                {active && <span className="absolute inset-x-3 bottom-0 h-[2px] bg-amber" />}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="hidden shrink-0 items-center gap-4 font-mono text-[10px] tracking-widest sm:flex">
+          <span className="flex items-center gap-1.5 text-yes">
+            <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-yes" />
+            LIVE · TESTNET
+          </span>
+          <a
+            href={EXPLORER}
+            target="_blank"
+            className="text-ink-dim transition-colors hover:text-amber"
+          >
+            EXPLORER ↗
+          </a>
         </div>
-      </Link>
-      <div className="flex items-center gap-5 font-mono text-[11px] tracking-widest">
-        <span className="flex items-center gap-2 text-yes">
-          <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-yes" />
-          LIVE
-        </span>
-        <span className="text-ink-faint">CASPER TESTNET</span>
-        <a
-          href={EXPLORER}
-          target="_blank"
-          className="text-ink-dim transition-colors hover:text-amber"
-        >
-          EXPLORER ↗
-        </a>
       </div>
-    </header>
+    </div>
   );
 }
 
-export function TickerTabs() {
-  const pathname = usePathname();
+/** slim stats strip under the nav */
+export function Ticker() {
   const markets = useJson<Market[]>('/api/markets', 15_000, []);
   const activity = useJson<Activity[]>('/api/activity', 10_000, []);
 
@@ -62,45 +78,19 @@ export function TickerTabs() {
   }, [activity, markets]);
 
   return (
-    <>
-      {/* ticker strip */}
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-1 border-b border-line py-2 font-mono text-[11px] tracking-wider text-ink-dim">
-        {stats.spot && (
-          <span>
-            BTC/USD <span className="text-ink">{stats.spot.toLocaleString()}</span>
-          </span>
-        )}
+    <div className="flex flex-wrap items-center gap-x-7 gap-y-1 border-b border-line/60 py-1.5 font-mono text-[10px] tracking-wider text-ink-faint">
+      {stats.spot && (
         <span>
-          ON-CHAIN TRADES <span className="text-ink">{stats.trades}</span>
+          BTC/USD <span className="text-ink-dim">{stats.spot.toLocaleString()}</span>
         </span>
-        <span>
-          X402 PAYMENTS <span className="text-amber">{stats.payments}</span>
-          <span className="text-ink-faint"> (LAST {activity.length})</span>
-        </span>
-        <span className="hidden text-ink-faint sm:inline">
-          EVERY TRADE · PAYMENT · RESOLUTION = REAL TX
-        </span>
-      </div>
-
-      {/* section tabs */}
-      <nav className="flex gap-1 border-b border-line">
-        {TABS.map((t) => {
-          const active = pathname === t.href;
-          return (
-            <Link
-              key={t.href}
-              href={t.href}
-              className={`px-5 py-2.5 font-mono text-[11px] tracking-[0.25em] transition-colors ${
-                active
-                  ? 'border-b-2 border-amber bg-surface text-amber'
-                  : 'text-ink-dim hover:bg-surface hover:text-ink'
-              }`}
-            >
-              {t.label}
-            </Link>
-          );
-        })}
-      </nav>
-    </>
+      )}
+      <span>
+        TRADES <span className="text-ink-dim">{stats.trades}</span>
+      </span>
+      <span>
+        X402 PAYMENTS <span className="text-amber">{stats.payments}</span>
+      </span>
+      <span className="hidden md:inline">EVERY TRADE · PAYMENT · RESOLUTION = REAL TX</span>
+    </div>
   );
 }
