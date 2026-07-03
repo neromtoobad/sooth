@@ -1,5 +1,6 @@
 // create one market via the on-chain factory and record it in deployments.json.
-// usage: pnpm tsx scripts/create-market.ts "<question with $STRIKE>" <closeTs-ms> <strike>
+// deterministic: pnpm tsx scripts/create-market.ts "<question with $STRIKE>" <closeTs-ms> <strike>
+// subjective:    pnpm tsx scripts/create-market.ts "<question>" <closeTs-ms> subjective "<resolution criteria>"
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { SoothClient } from '../lib/sooth.ts';
@@ -9,16 +10,24 @@ const ROOT = join(import.meta.dirname, '..');
 const DEPLOYMENTS = join(ROOT, 'deployments.json');
 const accounts = JSON.parse(readFileSync(join(ROOT, 'keys', 'accounts.json'), 'utf8'));
 
-const [question, closeTsRaw, strikeRaw] = process.argv.slice(2);
-if (!question || !closeTsRaw || !strikeRaw) {
-  console.error('usage: create-market.ts "<question>" <closeTs-ms> <strike>');
+const [question, closeTsRaw, arg3, arg4] = process.argv.slice(2);
+if (!question || !closeTsRaw || !arg3) {
+  console.error(
+    'usage: create-market.ts "<question>" <closeTs-ms> <strike | "subjective"> [criteria]',
+  );
   process.exit(1);
 }
 const closeTs = Number(closeTsRaw);
-const strike = Number(strikeRaw);
+const subjective = arg3 === 'subjective';
+const strike = subjective ? undefined : Number(arg3);
+const criteria = subjective ? (arg4 ?? '') : undefined;
 
 const deployer = await SoothClient.connect(join(ROOT, 'keys', 'deployer.pem'));
-console.log(`creating market: ${question} (close ${new Date(closeTs).toISOString()})`);
+console.log(
+  `creating ${subjective ? 'SUBJECTIVE' : 'deterministic'} market: ${question} (close ${new Date(
+    closeTs,
+  ).toISOString()})`,
+);
 const tx = await deployer.createMarket(question, closeTs, accounts.resolver.accountHash);
 console.log(`tx: ${EXPLORER}/transaction/${tx}`);
 
@@ -52,7 +61,13 @@ if (!marketHash) throw new Error('could not locate new market package hash in ef
 
 const state = JSON.parse(readFileSync(DEPLOYMENTS, 'utf8'));
 state.markets = state.markets ?? [];
-state.markets.push({ hash: marketHash, question, closeTs, strike, createTx: tx });
+state.markets.push({
+  hash: marketHash,
+  question,
+  closeTs,
+  ...(subjective ? { kind: 'subjective', criteria } : { kind: 'deterministic', strike }),
+  createTx: tx,
+});
 writeFileSync(DEPLOYMENTS, JSON.stringify(state, null, 2) + '\n');
 
 console.log(`market package: ${marketHash}`);

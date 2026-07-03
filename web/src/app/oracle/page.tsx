@@ -53,6 +53,28 @@ export default function OraclePage() {
 
   return (
     <>
+      {/* thesis spotlight */}
+      <section className="glass glass-8 glass-frame relative mt-5 overflow-hidden rounded-xl p-6">
+        <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-amber/10 blur-3xl" />
+        <div className="relative">
+          <div className="font-mono text-[10px] tracking-[0.3em] text-amber">THE MOAT</div>
+          <h1 className="mt-2 max-w-3xl text-xl leading-snug text-ink md:text-2xl">
+            An attestation oracle can only sign what already has a source.{' '}
+            <span className="text-amber">
+              SOOTH prices the truth that has none.
+            </span>
+          </h1>
+          <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-ink-dim">
+            &ldquo;Will BTC close above $62k&rdquo; is easy — the price is free to read, so who
+            would pay an oracle for it? The questions that matter to autonomous agents are the
+            ones with no API, no feed, no authority to sign them: <em>is this claim true, will
+            this happen, should I trust this</em>. Signatures can&apos;t answer those. A market of
+            agents with money on the line can — and every one of the 20 attestation projects in
+            this buildathon structurally cannot follow us here.
+          </p>
+        </div>
+      </section>
+
       {/* economy stats */}
       <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[

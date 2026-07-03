@@ -32,6 +32,8 @@ export interface MarketMeta {
   closeTs: number;
   strike?: number;
   createTx?: string;
+  kind?: 'deterministic' | 'subjective';
+  criteria?: string;
 }
 
 export interface MarketView extends MarketMeta {

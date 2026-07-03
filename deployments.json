@@ -6,21 +6,24 @@
       "question": "BTC/USD above spot in 2 hours (probe)",
       "closeTs": 1783039168514,
       "strike": 61451,
-      "createTx": "21a145675b1c70829316ddf80c2233c25ac1d406f12d287494a0bed92ab64a6a"
+      "createTx": "21a145675b1c70829316ddf80c2233c25ac1d406f12d287494a0bed92ab64a6a",
+      "kind": "deterministic"
     },
     {
       "hash": "ed2e52065451cba5a50eaa02915684f442c9ac5239feea0192f2eb668fad7873",
       "question": "BTC/USD closes above $62066 at 2026-07-06 00:00 UTC",
       "closeTs": 1783296000000,
       "strike": 62066,
-      "createTx": "6b363fa3a4e012131ead9d0a4d707b680595c8b60d21214fd8599deab06a9078"
+      "createTx": "6b363fa3a4e012131ead9d0a4d707b680595c8b60d21214fd8599deab06a9078",
+      "kind": "deterministic"
     },
     {
       "hash": "809ab03de37ed93e99d034232ff17b97b9d161ab7d2e9bb871e611cb7e51f60f",
       "question": "CSPR/USD closes above $0.001994 at 2026-07-05 12:00 UTC",
       "closeTs": 1783252800000,
       "strike": 0.001994,
-      "createTx": "f22fe4ed3d016fc7d4973b93c9ff8ffcaeac410af3904adda9ab25d772bb11ec"
+      "createTx": "f22fe4ed3d016fc7d4973b93c9ff8ffcaeac410af3904adda9ab25d772bb11ec",
+      "kind": "deterministic"
     }
   ],
   "txs": {

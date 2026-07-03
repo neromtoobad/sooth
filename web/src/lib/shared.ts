@@ -9,6 +9,8 @@ export interface Market {
   question: string;
   closeTs: number;
   strike?: number;
+  kind?: 'deterministic' | 'subjective';
+  criteria?: string;
   pYes: number;
   yesPool: string;
   noPool: string;
@@ -32,6 +34,10 @@ export interface Activity {
   decision?: string;
   confidence?: number;
   error?: string;
+  juror?: string;
+  vote?: 'yes' | 'no' | 'unresolved';
+  outcome?: boolean;
+  kind?: 'deterministic' | 'subjective';
 }
 
 export interface PricePoint {
@@ -99,6 +105,7 @@ export const AGENT_COLORS: Record<string, string> = {
   bull: 'text-yes',
   bear: 'text-no',
   resolver: 'text-ink',
+  jury: 'text-amber',
   consumer: 'text-[#5eead4]',
   deployer: 'text-ink-dim',
 };
@@ -112,6 +119,14 @@ export function actionLabel(a: Activity): { text: string; cls: string } {
   if (a.action === 'resolving' || a.action === 'resolved')
     return { text: a.action.toUpperCase(), cls: 'text-amber' };
   if (a.action === 'claimed') return { text: 'CLAIMED', cls: 'text-yes' };
+  if (a.action === 'convened') return { text: 'JURY CONVENED', cls: 'text-amber' };
+  if (a.action === 'verdict')
+    return {
+      text: `VERDICT ${(a.vote ?? '').toUpperCase()}`,
+      cls: a.vote === 'yes' ? 'text-yes' : a.vote === 'no' ? 'text-no' : 'text-ink-faint',
+    };
+  if (a.action === 'ruled') return { text: 'JURY RULED', cls: 'text-amber' };
+  if (a.action === 'disputed') return { text: 'DISPUTED', cls: 'text-no/70' };
   if (a.action === 'error') return { text: 'ERR', cls: 'text-no/70' };
   return { text: a.action.toUpperCase(), cls: 'text-ink-dim' };
 }

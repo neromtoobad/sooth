@@ -122,9 +122,68 @@ export default function AgentsPage() {
         })}
       </section>
 
+      <JuryPanel activity={activity} />
+
       <section className="mt-5">
         <ActivityLog activity={activity} />
       </section>
     </>
+  );
+}
+
+/** shows the LLM jury's verdicts on the most recently adjudicated subjective market */
+function JuryPanel({ activity }: { activity: Activity[] }) {
+  const verdicts = activity.filter((a) => a.agent === 'jury' && a.action === 'verdict');
+  const ruling = activity.find((a) => a.agent === 'jury' && (a.action === 'ruled' || a.action === 'disputed'));
+  if (verdicts.length === 0) return null;
+
+  // dedupe to the latest verdict per juror
+  const latest = new Map<string, Activity>();
+  for (const v of verdicts) if (v.juror && !latest.has(v.juror)) latest.set(v.juror, v);
+
+  return (
+    <section className="mt-5 border border-amber/30 bg-surface">
+      <div className="flex items-center justify-between border-b border-amber/30 px-4 py-2">
+        <h2 className="font-mono text-[11px] tracking-[0.25em] text-amber">
+          THE JURY — SETTLING UNSIGNABLE TRUTH
+        </h2>
+        <span className="font-mono text-[10px] tracking-widest text-ink-faint">
+          NO API · NO SIGNATURE · A PANEL OF MINDS
+        </span>
+      </div>
+      <div className="grid gap-px bg-line/40 sm:grid-cols-2 lg:grid-cols-3">
+        {[...latest.values()].map((v) => (
+          <div key={v.juror} className="bg-surface p-3">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="font-mono text-[10px] tracking-widest text-ink-dim">
+                {v.juror?.replace('juror-', '').toUpperCase()}
+              </span>
+              <span
+                className={`font-mono text-[10px] font-bold tracking-widest ${
+                  v.vote === 'yes' ? 'text-yes' : v.vote === 'no' ? 'text-no' : 'text-ink-faint'
+                }`}
+              >
+                {(v.vote ?? '').toUpperCase()}
+                {typeof v.confidence === 'number' && ` · ${(v.confidence * 100).toFixed(0)}%`}
+              </span>
+            </div>
+            <p className="text-[11px] italic leading-relaxed text-white/55">{v.thesis}</p>
+          </div>
+        ))}
+      </div>
+      {ruling && (
+        <div
+          className={`border-t px-4 py-2 font-mono text-[11px] tracking-wider ${
+            ruling.action === 'ruled'
+              ? 'border-amber/30 text-amber'
+              : 'border-no/30 text-no/80'
+          }`}
+        >
+          {ruling.action === 'ruled' ? 'VERDICT' : 'DISPUTED'} — {ruling.thesis}
+          {ruling.action === 'ruled' &&
+            ' · resolved on-chain, winners paid, losers funded them'}
+        </div>
+      )}
+    </section>
   );
 }

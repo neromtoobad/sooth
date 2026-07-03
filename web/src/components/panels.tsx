@@ -190,8 +190,18 @@ export function MarketCard({
       }`}
     >
       <div className="flex items-center justify-between border-b border-line/60 px-4 py-2">
-        <span className="font-mono text-[10px] tracking-[0.25em] text-ink-faint">
-          MARKET {String(idx + 1).padStart(2, '0')} · {short(m.hash)}
+        <span className="flex items-center gap-2 font-mono text-[10px] tracking-[0.25em] text-ink-faint">
+          MARKET {String(idx + 1).padStart(2, '0')}
+          {m.kind === 'subjective' ? (
+            <span
+              className="border border-amber/50 px-1.5 py-0.5 text-[8px] font-bold tracking-widest text-amber"
+              title="No API, no oracle, no signature can answer this — only a market can price it."
+            >
+              UNSIGNABLE
+            </span>
+          ) : (
+            <span className="text-ink-faint/70">· {short(m.hash)}</span>
+          )}
         </span>
         {m.resolved ? (
           <span
@@ -203,13 +213,22 @@ export function MarketCard({
           </span>
         ) : (
           <span className="font-mono text-[10px] tracking-widest text-ink-dim">
-            {m.closeTs > Date.now() ? `T-${countdown(m.closeTs)}` : 'CLOSED · RESOLVING'}
+            {m.closeTs > Date.now()
+              ? `T-${countdown(m.closeTs)}`
+              : m.kind === 'subjective'
+                ? 'CLOSED · JURY'
+                : 'CLOSED · RESOLVING'}
           </span>
         )}
       </div>
 
       <div className="px-4 pb-4 pt-3">
         <p className="min-h-[2.5rem] text-sm leading-snug text-ink">{m.question}</p>
+        {m.kind === 'subjective' && (
+          <p className="mt-1 font-mono text-[9px] leading-relaxed tracking-wide text-amber/70">
+            NO DATA SOURCE CAN ANSWER THIS — PRICE = THE CROWD&apos;S BELIEF · SETTLED BY LLM JURY
+          </p>
+        )}
         <div className="mt-3 flex items-end justify-between">
           <div>
             <span className="font-mono text-[10px] tracking-[0.25em] text-ink-faint">P(YES)</span>

@@ -28,7 +28,12 @@ function useCountUp(target: number, ms = 300): number {
 
 export function Hero() {
   const markets = useJson<Market[]>('/api/markets', 10_000, []);
-  const flagship = markets.find((m) => !m.resolved) ?? markets[0];
+  // flagship = the unsignable market if one is open, else any open market
+  const flagship =
+    markets.find((m) => m.kind === 'subjective' && !m.resolved) ??
+    markets.find((m) => !m.resolved) ??
+    markets[0];
+  const isSubjective = flagship?.kind === 'subjective';
   const p = useCountUp(flagship ? flagship.pYes * 100 : 50);
   const [hasVideo, setHasVideo] = useState(false);
 
@@ -98,7 +103,7 @@ export function Hero() {
       <div className="hero-float glass glass-frame relative z-10 flex h-[170px] w-[170px] flex-col justify-between rounded-2xl p-4 md:h-[200px] md:w-[200px]">
         <div className="flex items-start justify-between">
           <span className="font-mono text-[10px] tracking-widest text-amber">
-            [ LIVE · TESTNET ]
+            {isSubjective ? '[ UNSIGNABLE ]' : '[ LIVE · TESTNET ]'}
           </span>
           <span className="live-dot mt-0.5 h-[6px] w-[6px] shrink-0 rounded-full bg-amber" />
         </div>
@@ -107,9 +112,11 @@ export function Hero() {
             {p.toFixed(1)}
             <span className="text-[22px] text-amber">%</span>
           </div>
-          <div className="mt-1 text-[10px] text-white/50">probability of yes</div>
+          <div className="mt-1 text-[10px] text-white/50">
+            {isSubjective ? "the crowd's belief" : 'probability of yes'}
+          </div>
         </div>
-        <p className="truncate text-[10px] text-white/40">
+        <p className="line-clamp-2 text-[10px] leading-snug text-white/40">
           {flagship?.question ?? 'loading flagship market…'}
         </p>
       </div>
@@ -129,9 +136,11 @@ export function Hero() {
       </h2>
 
       {/* subline */}
-      <p className="relative z-10 mx-auto mt-3 max-w-[520px] text-center text-[13px] leading-relaxed text-white/60">
-        autonomous agents pay to see, trade what they believe, and sell the market&apos;s
-        consensus back to the machine economy — every position settled on casper.
+      <p className="relative z-10 mx-auto mt-3 max-w-[560px] text-center text-[13px] leading-relaxed text-white/60">
+        attestation oracles can only sign what already has a source. SOOTH prices the truth that{' '}
+        <span className="text-white/80">has none</span> — autonomous agents pay to see, trade what
+        they believe, and sell the market&apos;s consensus back to the machine economy. every
+        position settled on casper.
       </p>
 
       {/* CTAs */}
