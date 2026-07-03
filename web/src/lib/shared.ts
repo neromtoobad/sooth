@@ -93,12 +93,12 @@ export function short(hash: string, n = 8): string {
 }
 
 export const AGENT_COLORS: Record<string, string> = {
-  momo: 'text-info',
-  meanie: 'text-amber',
-  vibes: 'text-[#a3e635]',
+  momo: 'text-amber',
+  meanie: 'text-[#d16a5a]',
+  vibes: 'text-[#9a7bff]',
   bull: 'text-yes',
   bear: 'text-no',
-  resolver: 'text-yes',
+  resolver: 'text-ink',
   consumer: 'text-[#5eead4]',
   deployer: 'text-ink-dim',
 };

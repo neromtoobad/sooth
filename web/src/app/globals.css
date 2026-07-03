@@ -1,15 +1,15 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-bg: #070707;
-  --color-surface: #0d0d0d;
-  --color-surface-2: #131312;
+  --color-bg: #0a0a08;
+  --color-surface: #0e0e0b;
+  --color-surface-2: #14140f;
   --color-line: #262624;
   --color-line-strong: #3a3a36;
   --color-ink: #e8e6e1;
   --color-ink-dim: #8a877e;
   --color-ink-faint: #55534c;
-  --color-amber: #f5b800;
+  --color-amber: #e8b435;
   --color-amber-dim: #a87f00;
   --color-yes: #34d399;
   --color-no: #fb7185;
@@ -17,6 +17,8 @@
 
   --font-display: var(--font-space-grotesk), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font-inter: var(--font-inter), system-ui, sans-serif;
+  --font-serif-it: var(--font-instrument-serif), Georgia, serif;
 }
 
 :root {
@@ -29,7 +31,7 @@ body {
 }
 
 ::selection {
-  background: rgba(245, 184, 0, 0.25);
+  background: rgba(232, 180, 53, 0.25);
 }
 
 /* faint scanline texture — decorative only */
@@ -47,6 +49,47 @@ body {
   );
   z-index: 50;
 }
+
+/* ── liquid glass ─────────────────────────────────────────────── */
+
+.glass {
+  position: relative;
+  background: rgba(255, 255, 255, 0.01);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+
+.glass-8 {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* gradient-mask border frame via pseudo-element */
+.glass-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1.4px;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(232, 180, 53, 0.45), rgba(255, 255, 255, 0.04));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.glass-frame-dim::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.03));
+}
+
+/* ── animations ───────────────────────────────────────────────── */
 
 @keyframes pulse-dot {
   0%,
@@ -77,10 +120,54 @@ body {
   animation: cursor-blink 1.1s step-start infinite;
 }
 
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(-36px);
+  }
+  50% {
+    transform: translateY(-24px);
+  }
+}
+
+.hero-float {
+  transform: translateY(-30px);
+  animation: float-y 6s ease-in-out infinite;
+}
+
+@keyframes feed-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+    color: var(--color-amber);
+  }
+  40% {
+    color: var(--color-amber);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    color: inherit;
+  }
+}
+
+.feed-row-new {
+  animation: feed-in 700ms ease-out;
+}
+
+.bar-animate {
+  transition: width 400ms ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .live-dot,
-  .block-cursor {
+  .block-cursor,
+  .hero-float,
+  .feed-row-new {
     animation: none;
+  }
+  .hero-float {
+    transform: translateY(-30px);
   }
 }
 

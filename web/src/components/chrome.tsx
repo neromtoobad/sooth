@@ -11,7 +11,45 @@ const TABS = [
   { href: '/oracle', label: 'ORACLE' },
 ];
 
-export function Chrome() {
+/** top header only — pages render <TickerTabs/> below (home puts the hero between) */
+export function HeaderBar() {
+  return (
+    <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-amber/80 pb-4">
+      <Link href="/" className="flex items-center gap-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo.png"
+          alt="SOOTH logo — an eye whose upper lid is a stepped price line"
+          className="h-14 w-14 shrink-0 border border-line object-cover"
+        />
+        <div>
+          <h1 className="font-mono text-3xl font-bold tracking-tight text-ink">
+            SOOTH<span className="block-cursor text-amber">▮</span>
+          </h1>
+          <p className="mt-1 font-[family-name:var(--font-display)] text-sm text-ink-dim">
+            truth, priced live — the market-priced oracle for the agent economy
+          </p>
+        </div>
+      </Link>
+      <div className="flex items-center gap-5 font-mono text-[11px] tracking-widest">
+        <span className="flex items-center gap-2 text-yes">
+          <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-yes" />
+          LIVE
+        </span>
+        <span className="text-ink-faint">CASPER TESTNET</span>
+        <a
+          href={EXPLORER}
+          target="_blank"
+          className="text-ink-dim transition-colors hover:text-amber"
+        >
+          EXPLORER ↗
+        </a>
+      </div>
+    </header>
+  );
+}
+
+export function TickerTabs() {
   const pathname = usePathname();
   const markets = useJson<Market[]>('/api/markets', 15_000, []);
   const activity = useJson<Activity[]>('/api/activity', 10_000, []);
@@ -25,39 +63,6 @@ export function Chrome() {
 
   return (
     <>
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-amber/80 pb-4">
-        <Link href="/" className="flex items-center gap-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo.png"
-            alt="SOOTH logo — an eye whose upper lid is a stepped price line"
-            className="h-14 w-14 shrink-0 border border-line object-cover"
-          />
-          <div>
-            <h1 className="font-mono text-3xl font-bold tracking-tight text-ink">
-              SOOTH<span className="block-cursor text-amber">▮</span>
-            </h1>
-            <p className="mt-1 font-[family-name:var(--font-display)] text-sm text-ink-dim">
-              truth, priced live — the market-priced oracle for the agent economy
-            </p>
-          </div>
-        </Link>
-        <div className="flex items-center gap-5 font-mono text-[11px] tracking-widest">
-          <span className="flex items-center gap-2 text-yes">
-            <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-yes" />
-            LIVE
-          </span>
-          <span className="text-ink-faint">CASPER TESTNET</span>
-          <a
-            href={EXPLORER}
-            target="_blank"
-            className="text-ink-dim transition-colors hover:text-amber"
-          >
-            EXPLORER ↗
-          </a>
-        </div>
-      </header>
-
       {/* ticker strip */}
       <div className="flex flex-wrap items-center gap-x-8 gap-y-1 border-b border-line py-2 font-mono text-[11px] tracking-wider text-ink-dim">
         {stats.spot && (

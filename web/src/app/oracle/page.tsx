@@ -1,14 +1,61 @@
 'use client';
 
+import { useState } from 'react';
+import { Copy, Check, Radio } from 'lucide-react';
+import { TickerTabs } from '@/components/chrome';
 import { short, useJson, type Economy, type Market } from '@/lib/shared';
+
+function TerminalFrame({
+  title,
+  copyText,
+  children,
+}: {
+  title: string;
+  copyText: string;
+  children: React.ReactNode;
+}) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="glass glass-frame-dim glass-frame relative rounded-lg">
+      <div className="flex items-center justify-between border-b border-line/60 px-3 py-1.5">
+        <div className="flex items-center gap-2">
+          <span className="flex gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-no/60" />
+            <span className="h-2 w-2 rounded-full bg-amber/60" />
+            <span className="h-2 w-2 rounded-full bg-yes/60" />
+          </span>
+          <span className="font-mono text-[9px] tracking-[0.25em] text-ink-faint">{title}</span>
+        </div>
+        <button
+          onClick={() => {
+            navigator.clipboard?.writeText(copyText).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            });
+          }}
+          className="cursor-pointer text-ink-faint transition-colors hover:text-amber"
+          aria-label={`copy ${title}`}
+        >
+          {copied ? <Check size={12} className="text-yes" /> : <Copy size={12} />}
+        </button>
+      </div>
+      <pre className="overflow-x-auto px-3 py-3 font-mono text-[10px] leading-relaxed text-ink-dim">
+        {children}
+      </pre>
+    </div>
+  );
+}
 
 export default function OraclePage() {
   const markets = useJson<Market[]>('/api/markets', 15_000, []);
   const economy = useJson<Economy | null>('/api/economy', 30_000, null);
   const active = markets.find((m) => !m.resolved) ?? markets[0];
+  const hash = active?.hash ?? '…';
 
   return (
     <>
+      <TickerTabs />
+
       {/* economy stats */}
       <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
@@ -37,7 +84,7 @@ export default function OraclePage() {
             accent: false,
           },
         ].map((s) => (
-          <div key={s.label} className="border border-line bg-surface p-4">
+          <div key={s.label} className="glass glass-8 glass-frame-dim glass-frame rounded-xl p-4">
             <div className="font-mono text-[9px] tracking-[0.25em] text-ink-faint">{s.label}</div>
             <div
               className={`mt-1 font-mono text-2xl font-bold tabular-nums ${
@@ -52,49 +99,56 @@ export default function OraclePage() {
       </section>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        {/* how to consume */}
-        <section className="border border-line bg-surface">
-          <div className="flex items-center gap-2 border-b border-line px-4 py-2">
-            <span className="flex gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-no/60" />
-              <span className="h-2 w-2 rounded-full bg-amber/60" />
-              <span className="h-2 w-2 rounded-full bg-yes/60" />
-            </span>
-            <h2 className="font-mono text-[11px] tracking-[0.25em] text-ink-dim">
+        {/* how to consume — three stacked terminal frames */}
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 font-mono text-[11px] tracking-[0.25em] text-ink-dim">
+              <Radio size={12} className="text-amber" />
               CONSUME THIS ORACLE
             </h2>
+            <span className="glass glass-frame-dim glass-frame rounded-full px-3 py-1 font-mono text-[9px] tracking-widest text-amber">
+              1 sUSD / READ
+            </span>
           </div>
-          <div className="space-y-3 px-4 py-4 text-xs leading-relaxed text-ink-dim">
-            <p>
-              the live probability <em className="text-ink">is</em> the product. any agent can buy
-              a read with an x402 micropayment in sUSD — no account, no API key, just a wallet:
-            </p>
-            <pre className="overflow-x-auto border border-line bg-bg p-3 font-mono text-[10px] leading-relaxed text-ink-dim">
-              <span className="text-ink">
-                $ curl sooth/oracle/{short(active?.hash ?? '', 10)}…
-              </span>
-              {'\n'}
+          <div className="space-y-3">
+            <TerminalFrame
+              title="REQUEST"
+              copyText={`curl https://sooth.example/oracle/${hash}`}
+            >
+              <span className="text-ink">$ curl sooth/oracle/{short(hash, 10)}…</span>
+            </TerminalFrame>
+            <TerminalFrame
+              title="402 — PAYMENT REQUIRED"
+              copyText={`HTTP/1.1 402 Payment Required\nPAYMENT-REQUIRED: { asset: sUSD, price: 1, payTo: sooth }`}
+            >
               <span className="text-no">← 402 PAYMENT REQUIRED</span>
               {'\n'}
-              {'   asset: sUSD · price: 1/call · payTo: sooth'}
-              {'\n\n'}
-              <span className="text-ink-faint"># client signs sUSD transfer authorization</span>
+              {'  asset: sUSD · price: 1/call · payTo: sooth'}
+              {'\n'}
+              <span className="text-ink-faint">
+                # client signs an sUSD transfer authorization
+              </span>
               {'\n'}
               <span className="text-ink-faint"># retries with PAYMENT-SIGNATURE header</span>
-              {'\n'}
+            </TerminalFrame>
+            <TerminalFrame
+              title="200 — TRUTH, DELIVERED"
+              copyText={`{ "p_yes": ${active ? active.pYes.toFixed(3) : '0.500'}, "market": "${hash}" }`}
+            >
               <span className="text-yes">
                 ← 200 OK {'{'} &quot;p_yes&quot;: {active ? active.pYes.toFixed(3) : '0.500'}{' '}
                 {'}'}
               </span>
               {'\n'}
-              {'   settlement lands on-chain'}
-            </pre>
-            <p>
-              x402 runs <span className="text-ink">twice</span>: agents{' '}
-              <span className="text-info">pay for data in</span> (price feed) and{' '}
-              <span className="text-[#5eead4]">pay for truth out</span> (this oracle).
-            </p>
+              {'  settlement lands on-chain — receipt in PAYMENT-RESPONSE'}
+            </TerminalFrame>
           </div>
+          <p className="mt-3 text-xs leading-relaxed text-ink-dim">
+            x402 runs <span className="text-ink">twice</span>: agents{' '}
+            <span className="text-info">pay for data in</span> (price feed) and{' '}
+            <span className="text-[#5eead4]">pay for truth out</span> (this oracle). no account,
+            no API key — just a wallet.
+          </p>
         </section>
 
         {/* why market-priced truth */}
@@ -111,8 +165,9 @@ export default function OraclePage() {
             </p>
             <ul className="space-y-2">
               <li>
-                <span className="text-ink">wrong beliefs cost money.</span> an agent that misprices
-                a market funds the agents that price it right — the leaderboard is the proof.
+                <span className="text-ink">wrong beliefs cost money.</span> an agent that
+                misprices a market funds the agents that price it right — the leaderboard is the
+                proof.
               </li>
               <li>
                 <span className="text-ink">the price aggregates everything.</span> momentum

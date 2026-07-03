@@ -1,16 +1,62 @@
 'use client';
 
 import { useMemo } from 'react';
+import { Activity as ActivityIcon } from 'lucide-react';
 import {
   AGENT_COLORS,
   EXPLORER,
   actionLabel,
   countdown,
   short,
+  useJson,
   type Activity,
   type Market,
   type PricePoint,
 } from '@/lib/shared';
+
+/* ── sparkline (24h P(YES), hand-rolled) ───────────────────────── */
+
+function Sparkline({ market }: { market: string }) {
+  const points = useJson<PricePoint[]>(`/api/history?market=${market}`, 30_000, []);
+  const path = useMemo(() => {
+    const cutoff = Date.now() - 24 * 3600_000;
+    const pts = points.filter((p) => p.ts >= cutoff);
+    if (pts.length < 2) return null;
+    const ps = pts.map((p) => p.p);
+    const lo = Math.min(...ps);
+    const hi = Math.max(...ps);
+    const span = Math.max(pts[pts.length - 1].ts - pts[0].ts, 1);
+    const range = Math.max(hi - lo, 0.01);
+    const xy = pts.map((pt) => [
+      ((pt.ts - pts[0].ts) / span) * 200,
+      36 - ((pt.p - lo) / range) * 30 - 3,
+    ]);
+    return {
+      line: xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' '),
+      area: `0,36 ${xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')} 200,36`,
+    };
+  }, [points]);
+
+  if (!path) return <div className="h-9" />;
+  return (
+    <svg viewBox="0 0 200 36" className="h-9 w-full" preserveAspectRatio="none" aria-hidden>
+      <defs>
+        <linearGradient id={`spark-${market.slice(0, 6)}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#e8b435" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#e8b435" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={path.area} fill={`url(#spark-${market.slice(0, 6)})`} />
+      <polyline
+        points={path.line}
+        fill="none"
+        stroke="#e8b435"
+        strokeWidth="1.5"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
 
 /* ── chart ─────────────────────────────────────────────────────── */
 
@@ -38,14 +84,21 @@ export function Chart({ points, resolved }: { points: PricePoint[]; resolved: bo
     return { path, area, lo, hi, lastXY: xy[xy.length - 1] as [number, number] };
   }, [points]);
 
-  const color = resolved ? '#8a877e' : '#f5b800';
+  const color = resolved ? '#8a877e' : '#e8b435';
 
   return (
     <div className="relative">
+      {/* glass observations chip */}
+      <div className="glass glass-frame-dim absolute right-3 top-2 z-10 flex items-center gap-2 rounded-full px-3 py-1">
+        <span className="live-dot h-1.5 w-1.5 rounded-full bg-amber" />
+        <span className="font-mono text-[9px] tracking-widest text-ink-dim">
+          AGENTS&apos; PAID OBSERVATIONS · {points.length}
+        </span>
+      </div>
       <svg viewBox="0 0 1000 300" className="h-64 w-full" preserveAspectRatio="none">
         <defs>
           <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.16" />
+            <stop offset="0%" stopColor={color} stopOpacity="0.12" />
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
@@ -56,9 +109,9 @@ export function Chart({ points, resolved }: { points: PricePoint[]; resolved: bo
             x2="1000"
             y1={300 - f * 280 - 10}
             y2={300 - f * 280 - 10}
-            stroke="#262624"
+            stroke="rgba(255,255,255,0.1)"
             strokeWidth="1"
-            strokeDasharray="2 6"
+            strokeDasharray="1 7"
           />
         ))}
         {path && <polygon points={area!} fill="url(#fill)" />}
@@ -90,7 +143,7 @@ export function Chart({ points, resolved }: { points: PricePoint[]; resolved: bo
       </svg>
       {path && (
         <>
-          <span className="absolute right-2 top-1 font-mono text-[10px] text-ink-faint">
+          <span className="absolute right-2 top-10 font-mono text-[10px] text-ink-faint">
             {(hi * 100).toFixed(0)}
           </span>
           <span className="absolute bottom-1 right-2 font-mono text-[10px] text-ink-faint">
@@ -132,12 +185,11 @@ export function MarketCard({
   return (
     <button
       onClick={onSelect}
-      className={`group relative cursor-pointer border bg-surface p-0 text-left transition-colors duration-200 ${
-        active ? 'border-amber-dim' : 'border-line hover:border-line-strong'
+      className={`glass glass-8 group relative cursor-pointer rounded-xl p-0 text-left transition-all duration-200 hover:-translate-y-[2px] ${
+        active ? 'glass-frame' : 'glass-frame glass-frame-dim hover:brightness-125'
       }`}
     >
-      {active && <span className="absolute left-0 top-0 h-full w-[2px] bg-amber" />}
-      <div className="flex items-center justify-between border-b border-line px-4 py-2">
+      <div className="flex items-center justify-between border-b border-line/60 px-4 py-2">
         <span className="font-mono text-[10px] tracking-[0.25em] text-ink-faint">
           MARKET {String(idx + 1).padStart(2, '0')} · {short(m.hash)}
         </span>
@@ -183,12 +235,25 @@ export function MarketCard({
           </div>
         </div>
 
-        <div className="mt-3">
-          <div className="flex h-1 overflow-hidden">
-            <div className="bg-yes/70" style={{ width: `${noShare * 100}%` }} />
-            <div className="bg-no/60" style={{ width: `${(1 - noShare) * 100}%` }} />
+        {/* 24h sparkline */}
+        <div className="mt-2">
+          <Sparkline market={m.hash} />
+        </div>
+
+        {/* YES / NO split — animated, glowing divider */}
+        <div className="mt-1">
+          <div className="relative flex h-1 overflow-visible">
+            <div className="bar-animate bg-yes/70" style={{ width: `${noShare * 100}%` }} />
+            <div
+              className="bar-animate bg-no/60"
+              style={{ width: `${(1 - noShare) * 100}%` }}
+            />
+            <span
+              className="absolute top-1/2 h-[5px] w-px -translate-y-1/2 bg-white shadow-[0_0_4px_1px_rgba(255,255,255,0.6)]"
+              style={{ left: `${noShare * 100}%` }}
+            />
           </div>
-          <div className="mt-1 flex justify-between font-mono text-[9px] tracking-widest text-ink-faint">
+          <div className="mt-1.5 flex justify-between font-mono text-[9px] tracking-widest text-ink-faint">
             <span>YES {(noShare * 100).toFixed(0)}</span>
             <span>NO {((1 - noShare) * 100).toFixed(0)}</span>
           </div>
@@ -216,11 +281,13 @@ export function ActivityLog({
         .slice(0, limit),
     [activity, limit],
   );
+  const newestTs = feed[0]?.ts ?? 0;
 
   return (
     <div className="border border-line bg-surface">
       <div className="flex items-center justify-between border-b border-line px-4 py-2">
-        <h2 className="font-mono text-[11px] tracking-[0.25em] text-ink-dim">
+        <h2 className="flex items-center gap-2 font-mono text-[11px] tracking-[0.25em] text-ink-dim">
+          <ActivityIcon size={12} className="text-amber" />
           AGENT ACTIVITY LOG
         </h2>
         <span className="font-mono text-[10px] text-ink-faint">tail -f activity.jsonl</span>
@@ -228,10 +295,13 @@ export function ActivityLog({
       <div className={`terminal-scroll ${maxHeight} overflow-y-auto px-1 py-1`}>
         {feed.map((a, i) => {
           const act = actionLabel(a);
+          const isVibesThesis = a.agent === 'vibes' && a.thesis;
           return (
             <div
               key={`${a.ts}-${i}`}
-              className="border-b border-line/40 px-3 py-2 font-mono text-[11px] leading-relaxed last:border-0 hover:bg-surface-2"
+              className={`border-b border-line/40 px-3 py-2 font-mono text-[11px] leading-relaxed last:border-0 hover:bg-surface-2 ${
+                a.ts === newestTs && Date.now() - a.ts < 15_000 ? 'feed-row-new' : ''
+              }`}
             >
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <span className="text-ink-faint">
@@ -251,7 +321,13 @@ export function ActivityLog({
                 )}
               </div>
               {(a.thesis ?? a.decision ?? a.signal) && (
-                <p className="mt-0.5 text-ink-faint">{a.thesis ?? a.decision ?? a.signal}</p>
+                <p
+                  className={`mt-0.5 ${
+                    isVibesThesis ? 'italic text-white/60' : 'text-ink-faint'
+                  }`}
+                >
+                  {a.thesis ?? a.decision ?? a.signal}
+                </p>
               )}
               {(a.txHash || a.x402_payment) && (
                 <div className="mt-1 flex gap-2">
