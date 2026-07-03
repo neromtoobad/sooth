@@ -78,19 +78,19 @@ export function Ticker() {
   }, [activity, markets]);
 
   return (
-    <div className="flex flex-wrap items-center gap-x-7 gap-y-1 border-b border-line/60 py-1.5 font-mono text-[10px] tracking-wider text-ink-faint">
+    <div className="flex flex-wrap items-center gap-x-7 gap-y-1 border-b border-line/60 py-2 text-[11px] text-ink-faint">
       {stats.spot && (
         <span>
-          BTC/USD <span className="text-ink-dim">{stats.spot.toLocaleString()}</span>
+          BTC <span className="font-mono text-ink-dim">${stats.spot.toLocaleString()}</span>
         </span>
       )}
       <span>
-        TRADES <span className="text-ink-dim">{stats.trades}</span>
+        on-chain trades <span className="font-mono text-ink-dim">{stats.trades}</span>
       </span>
       <span>
-        X402 PAYMENTS <span className="text-amber">{stats.payments}</span>
+        micropayments <span className="font-mono text-amber">{stats.payments}</span>
       </span>
-      <span className="hidden md:inline">EVERY TRADE · PAYMENT · RESOLUTION = REAL TX</span>
+      <span className="hidden md:inline">everything here is a real transaction on Casper</span>
     </div>
   );
 }

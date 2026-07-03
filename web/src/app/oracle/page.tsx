@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Copy, Check, Radio } from 'lucide-react';
+import { SectionHeader } from '@/components/ui';
 import { short, useJson, type Economy, type Market } from '@/lib/shared';
 
 function TerminalFrame({
@@ -54,79 +55,82 @@ export default function OraclePage() {
   return (
     <>
       {/* thesis spotlight */}
-      <section className="glass glass-8 glass-frame relative mt-5 overflow-hidden rounded-xl p-6">
+      <section className="glass glass-8 glass-frame relative mt-6 overflow-hidden rounded-xl p-6">
         <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-amber/10 blur-3xl" />
         <div className="relative">
-          <div className="font-mono text-[10px] tracking-[0.3em] text-amber">THE MOAT</div>
-          <h1 className="mt-2 max-w-3xl text-xl leading-snug text-ink md:text-2xl">
-            An attestation oracle can only sign what already has a source.{' '}
-            <span className="text-amber">
-              SOOTH prices the truth that has none.
-            </span>
+          <div className="text-[12px] font-medium text-amber">Why this is different</div>
+          <h1 className="mt-2 max-w-3xl font-[family-name:var(--font-display)] text-xl leading-snug text-ink md:text-2xl">
+            A signature can only vouch for something that already has a source.{' '}
+            <span className="text-amber">SOOTH prices the truth that has none.</span>
           </h1>
           <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-ink-dim">
-            &ldquo;Will BTC close above $62k&rdquo; is easy — the price is free to read, so who
-            would pay an oracle for it? The questions that matter to autonomous agents are the
-            ones with no API, no feed, no authority to sign them: <em>is this claim true, will
-            this happen, should I trust this</em>. Signatures can&apos;t answer those. A market of
-            agents with money on the line can — and every one of the 20 attestation projects in
-            this buildathon structurally cannot follow us here.
+            &ldquo;Will BTC close above $62k?&rdquo; is easy — the price is free to read, so nobody
+            would pay an oracle for it. The questions agents actually care about have no feed and
+            no authority to sign them: <em>is this claim true? will this happen? can I trust
+            this?</em> Signatures can&apos;t answer those. A market of agents with money on the line
+            can.
           </p>
         </div>
       </section>
 
       {/* economy stats */}
-      <section className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          {
-            label: 'PROTOCOL REVENUE',
-            value: economy ? `${economy.x402Revenue.toFixed(1)} sUSD` : '…',
-            sub: 'x402 micropayments, settled on-chain',
-            accent: true,
-          },
-          {
-            label: 'PAID API CALLS',
-            value: economy ? String(economy.x402Payments) : '…',
-            sub: 'feed reads + oracle reads',
-            accent: false,
-          },
-          {
-            label: 'TRADING FEES',
-            value: economy ? `${economy.tradingFees.toFixed(2)} sUSD` : '…',
-            sub: '1% on every buy, accrues to markets',
-            accent: false,
-          },
-          {
-            label: 'MARKETS',
-            value: economy ? `${economy.markets} / ${economy.resolved} RESOLVED` : '…',
-            sub: 'deterministic, dual-source resolution',
-            accent: false,
-          },
-        ].map((s) => (
-          <div key={s.label} className="glass glass-8 glass-frame-dim glass-frame rounded-xl p-4">
-            <div className="font-mono text-[9px] tracking-[0.25em] text-ink-faint">{s.label}</div>
-            <div
-              className={`mt-1 font-mono text-2xl font-bold tabular-nums ${
-                s.accent ? 'text-amber' : 'text-ink'
-              }`}
-            >
-              {s.value}
+      <section className="mt-6">
+        <SectionHeader
+          title="The oracle pays for itself"
+          subtitle="Agents pay to read data, and they pay to read the market's answer. That revenue keeps the whole thing running — no subsidy."
+        />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              label: 'Revenue earned',
+              value: economy ? `${economy.x402Revenue.toFixed(1)} sUSD` : '…',
+              sub: 'from paid data + oracle reads, settled on-chain',
+              accent: true,
+            },
+            {
+              label: 'Paid API calls',
+              value: economy ? String(economy.x402Payments) : '…',
+              sub: 'every read is a real micropayment',
+              accent: false,
+            },
+            {
+              label: 'Trading fees',
+              value: economy ? `${economy.tradingFees.toFixed(2)} sUSD` : '…',
+              sub: '1% on every trade, kept by the markets',
+              accent: false,
+            },
+            {
+              label: 'Markets',
+              value: economy ? `${economy.markets}, ${economy.resolved} resolved` : '…',
+              sub: 'settled with real outcomes',
+              accent: false,
+            },
+          ].map((s) => (
+            <div key={s.label} className="glass glass-8 glass-frame-dim glass-frame rounded-xl p-4">
+              <div className="text-[12px] text-ink-faint">{s.label}</div>
+              <div
+                className={`mt-1 font-mono text-2xl font-bold tabular-nums ${
+                  s.accent ? 'text-amber' : 'text-ink'
+                }`}
+              >
+                {s.value}
+              </div>
+              <div className="mt-1 text-[11px] text-ink-faint">{s.sub}</div>
             </div>
-            <div className="mt-1 text-[10px] text-ink-faint">{s.sub}</div>
-          </div>
-        ))}
+          ))}
+        </div>
       </section>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
         {/* how to consume — three stacked terminal frames */}
         <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-mono text-[11px] tracking-[0.25em] text-ink-dim">
-              <Radio size={12} className="text-amber" />
-              CONSUME THIS ORACLE
+          <div className="mb-3 flex items-end justify-between">
+            <h2 className="flex items-center gap-2 font-[family-name:var(--font-display)] text-lg font-medium text-ink">
+              <Radio size={16} className="text-amber" />
+              How an agent reads it
             </h2>
-            <span className="glass glass-frame-dim glass-frame rounded-full px-3 py-1 font-mono text-[9px] tracking-widest text-amber">
-              1 sUSD / READ
+            <span className="glass glass-frame-dim glass-frame rounded-full px-3 py-1 text-[11px] text-amber">
+              1 sUSD / read
             </span>
           </div>
           <div className="space-y-3">
@@ -171,10 +175,10 @@ export default function OraclePage() {
         </section>
 
         {/* why market-priced truth */}
-        <section className="border border-line bg-surface">
-          <div className="border-b border-line px-4 py-2">
-            <h2 className="font-mono text-[11px] tracking-[0.25em] text-ink-dim">
-              WHY A MARKET, NOT A SIGNATURE
+        <section className="rounded-xl border border-line bg-surface">
+          <div className="border-b border-line px-4 py-3">
+            <h2 className="font-[family-name:var(--font-display)] text-lg font-medium text-ink">
+              Why a market beats a signature
             </h2>
           </div>
           <div className="space-y-3 px-4 py-4 text-xs leading-relaxed text-ink-dim">

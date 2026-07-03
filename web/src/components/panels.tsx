@@ -91,9 +91,7 @@ export function Chart({ points, resolved }: { points: PricePoint[]; resolved: bo
       {/* glass observations chip */}
       <div className="glass glass-frame-dim absolute right-3 top-2 z-10 flex items-center gap-2 rounded-full px-3 py-1">
         <span className="live-dot h-1.5 w-1.5 rounded-full bg-amber" />
-        <span className="font-mono text-[9px] tracking-widest text-ink-dim">
-          AGENTS&apos; PAID OBSERVATIONS · {points.length}
-        </span>
+        <span className="text-[10px] text-ink-dim">{points.length} paid observations</span>
       </div>
       <svg viewBox="0 0 1000 300" className="h-64 w-full" preserveAspectRatio="none">
         <defs>
@@ -189,35 +187,32 @@ export function MarketCard({
         active ? 'glass-frame' : 'glass-frame glass-frame-dim hover:brightness-125'
       }`}
     >
-      <div className="flex items-center justify-between border-b border-line/60 px-4 py-2">
-        <span className="flex items-center gap-2 font-mono text-[10px] tracking-[0.25em] text-ink-faint">
-          MARKET {String(idx + 1).padStart(2, '0')}
-          {m.kind === 'subjective' ? (
-            <span
-              className="border border-amber/50 px-1.5 py-0.5 text-[8px] font-bold tracking-widest text-amber"
-              title="No API, no oracle, no signature can answer this — only a market can price it."
-            >
-              UNSIGNABLE
-            </span>
-          ) : (
-            <span className="text-ink-faint/70">· {short(m.hash)}</span>
-          )}
-        </span>
+      <div className="flex items-center justify-between border-b border-line/60 px-4 py-2.5">
+        {m.kind === 'subjective' ? (
+          <span
+            className="rounded-full border border-amber/50 px-2 py-0.5 text-[10px] font-medium text-amber"
+            title="No API, no oracle, no signature can answer this — only a market can price it."
+          >
+            Unsignable
+          </span>
+        ) : (
+          <span className="text-[11px] text-ink-faint">Price market</span>
+        )}
         {m.resolved ? (
           <span
-            className={`border px-2 py-0.5 font-mono text-[10px] font-bold tracking-widest ${
+            className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
               m.outcome ? 'border-yes/40 text-yes' : 'border-no/40 text-no'
             }`}
           >
-            {m.outcome ? 'YES' : 'NO'}
+            Resolved {m.outcome ? 'YES' : 'NO'}
           </span>
         ) : (
-          <span className="font-mono text-[10px] tracking-widest text-ink-dim">
+          <span className="text-[11px] text-ink-dim">
             {m.closeTs > Date.now()
-              ? `T-${countdown(m.closeTs)}`
+              ? `closes in ${countdown(m.closeTs).toLowerCase()}`
               : m.kind === 'subjective'
-                ? 'CLOSED · JURY'
-                : 'CLOSED · RESOLVING'}
+                ? 'closed · jury deciding'
+                : 'closed · resolving'}
           </span>
         )}
       </div>
@@ -225,31 +220,32 @@ export function MarketCard({
       <div className="px-4 pb-4 pt-3">
         <p className="min-h-[2.5rem] text-sm leading-snug text-ink">{m.question}</p>
         {m.kind === 'subjective' && (
-          <p className="mt-1 font-mono text-[9px] leading-relaxed tracking-wide text-amber/70">
-            NO DATA SOURCE CAN ANSWER THIS — PRICE = THE CROWD&apos;S BELIEF · SETTLED BY LLM JURY
+          <p className="mt-1 text-[11px] leading-relaxed text-amber/70">
+            No data source can answer this — the price is the crowd&apos;s belief, settled by an
+            LLM jury.
           </p>
         )}
         <div className="mt-3 flex items-end justify-between">
           <div>
-            <span className="font-mono text-[10px] tracking-[0.25em] text-ink-faint">P(YES)</span>
             <div
               className={`font-mono text-5xl font-bold tabular-nums leading-none ${
                 m.resolved ? 'text-ink-dim' : 'text-amber'
               }`}
             >
-              {(m.pYes * 100).toFixed(1)}
+              {(m.pYes * 100).toFixed(0)}
               <span className="text-2xl">%</span>
             </div>
+            <span className="text-[11px] text-ink-dim">chance of yes</span>
           </div>
-          <div className="text-right font-mono text-[10px] leading-relaxed text-ink-faint">
-            <div>{m.trades} TRADES</div>
+          <div className="text-right text-[11px] leading-relaxed text-ink-faint">
+            <div>{m.trades} trades</div>
             <a
               href={`${EXPLORER}/contract-package/${m.hash}`}
               target="_blank"
               onClick={(e) => e.stopPropagation()}
               className="text-ink-dim underline-offset-2 hover:text-amber hover:underline"
             >
-              CONTRACT ↗
+              on-chain ↗
             </a>
           </div>
         </div>
@@ -272,9 +268,9 @@ export function MarketCard({
               style={{ left: `${noShare * 100}%` }}
             />
           </div>
-          <div className="mt-1.5 flex justify-between font-mono text-[9px] tracking-widest text-ink-faint">
-            <span>YES {(noShare * 100).toFixed(0)}</span>
-            <span>NO {((1 - noShare) * 100).toFixed(0)}</span>
+          <div className="mt-1.5 flex justify-between text-[10px] text-ink-faint">
+            <span className="text-yes/80">yes {(noShare * 100).toFixed(0)}%</span>
+            <span className="text-no/80">no {((1 - noShare) * 100).toFixed(0)}%</span>
           </div>
         </div>
       </div>
@@ -304,12 +300,14 @@ export function ActivityLog({
 
   return (
     <div className="border border-line bg-surface">
-      <div className="flex items-center justify-between border-b border-line px-4 py-2">
-        <h2 className="flex items-center gap-2 font-mono text-[11px] tracking-[0.25em] text-ink-dim">
-          <ActivityIcon size={12} className="text-amber" />
-          AGENT ACTIVITY LOG
+      <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+        <h2 className="flex items-center gap-2 font-[family-name:var(--font-display)] text-sm font-medium text-ink">
+          <ActivityIcon size={14} className="text-amber" />
+          What the agents are doing, live
         </h2>
-        <span className="font-mono text-[10px] text-ink-faint">tail -f activity.jsonl</span>
+        <span className="hidden font-mono text-[10px] text-ink-faint sm:inline">
+          every line is a real transaction
+        </span>
       </div>
       <div className={`terminal-scroll ${maxHeight} overflow-y-auto px-1 py-1`}>
         {feed.map((a, i) => {
