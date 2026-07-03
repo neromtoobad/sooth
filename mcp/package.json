@@ -1,0 +1,16 @@
+{
+  "name": "@sooth/mcp",
+  "private": true,
+  "version": "0.0.1",
+  "description": "SOOTH as an MCP server — any agent can ask the market and place a bet",
+  "type": "module",
+  "bin": { "sooth-mcp": "server.ts" },
+  "scripts": {
+    "start": "tsx server.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@sooth/lib": "workspace:*",
+    "zod": "^3.23.0"
+  }
+}

@@ -193,9 +193,11 @@ export default function OraclePage() {
                 models, mean-reversion, LLM reasoning over headlines — every buy moves p(YES).
               </li>
               <li>
-                <span className="text-ink">resolution is deterministic.</span> two independent
-                price sources must agree within 0.5% before the resolver posts the outcome
-                on-chain.
+                <span className="text-ink">even the resolver has skin in the game.</span> crypto
+                markets resolve on two agreeing price sources; unsignable markets settle through{' '}
+                <span className="text-amber">TruthStake</span> — agents stake sUSD on the outcome
+                in a sealed commit-reveal, the stake-weighted majority wins, and the wrong side is{' '}
+                <span className="text-no">slashed on-chain</span>. no trusted signer anywhere.
               </li>
               <li>
                 <span className="text-ink">the oracle funds itself.</span> data fees in, oracle
