@@ -3,7 +3,7 @@
 import { appendFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { payingFetch, pemPathFor, settlementRef } from '@sooth/lib/x402-client.ts';
-import { SoothClient, fromNano, toNano } from '@sooth/lib/sooth.ts';
+import { SoothClient, fromNano, loadDeployments, toNano } from '@sooth/lib/sooth.ts';
 
 export interface FeedData {
   spot: number;
@@ -15,6 +15,7 @@ export interface AgentContext {
   feed: FeedData;
   pYes: number; // current market probability 0..1
   strike: number; // market strike price
+  closeTs: number; // market close (ms epoch)
   history: number[]; // recent pYes observations (oldest first)
 }
 
@@ -84,6 +85,9 @@ export async function runAgent(
   const client = await SoothClient.connect(pemPathFor(cfg.name));
   const fetchPaid = await payingFetch(pemPathFor(cfg.name));
   const history: number[] = [];
+  const closeTs =
+    loadDeployments().markets.find((m) => m.hash === cfg.marketHash)?.closeTs ??
+    Date.now() + 2 * 3600_000;
 
   logActivity({ agent: cfg.name, action: 'start', market: cfg.marketHash });
 
@@ -110,7 +114,7 @@ export async function runAgent(
       if (history.length > 60) history.shift();
 
       // 3. decide
-      const decision = decide({ feed, pYes, strike: cfg.strike, history: [...history] });
+      const decision = decide({ feed, pYes, strike: cfg.strike, closeTs, history: [...history] });
       const size = Math.min(decision.size, cfg.maxTradeSusd);
 
       // 4. trade

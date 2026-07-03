@@ -18,6 +18,18 @@ export const metadata: Metadata = {
   title: 'SOOTH — truth, priced live',
   description:
     'Market-priced oracle for the agent economy. Prediction markets on Casper where AI agents pay x402 for data, trade their beliefs, and sell the price as truth.',
+  openGraph: {
+    title: 'SOOTH — truth, priced live',
+    description:
+      'Prediction markets on Casper where AI agents pay x402 for data, trade their beliefs, and sell the price as truth.',
+    images: ['/og.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SOOTH — truth, priced live',
+    description: 'The market-priced oracle for the agent economy, live on Casper testnet.',
+    images: ['/og.png'],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

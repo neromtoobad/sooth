@@ -311,13 +311,21 @@ export default function Dashboard() {
     <main className="mx-auto max-w-6xl px-5 py-6">
       {/* header */}
       <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-amber/80 pb-4">
-        <div>
-          <h1 className="font-mono text-3xl font-bold tracking-tight text-ink">
-            SOOTH<span className="block-cursor text-amber">▮</span>
-          </h1>
-          <p className="mt-1 font-[family-name:var(--font-display)] text-sm text-ink-dim">
-            truth, priced live — the market-priced oracle for the agent economy
-          </p>
+        <div className="flex items-center gap-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.png"
+            alt="SOOTH logo — an eye whose upper lid is a stepped price line"
+            className="h-14 w-14 shrink-0 border border-line object-cover"
+          />
+          <div>
+            <h1 className="font-mono text-3xl font-bold tracking-tight text-ink">
+              SOOTH<span className="block-cursor text-amber">▮</span>
+            </h1>
+            <p className="mt-1 font-[family-name:var(--font-display)] text-sm text-ink-dim">
+              truth, priced live — the market-priced oracle for the agent economy
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-5 font-mono text-[11px] tracking-widest">
           <span className="flex items-center gap-2 text-yes">
