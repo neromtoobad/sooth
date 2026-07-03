@@ -8,7 +8,8 @@
     "start": "tsx src/run-traders.ts",
     "momo": "tsx src/momo.ts",
     "meanie": "tsx src/meanie.ts",
-    "resolver": "tsx src/resolver.ts"
+    "resolver": "tsx src/resolver.ts",
+    "llm": "tsx src/llm.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",

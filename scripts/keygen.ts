@@ -5,7 +5,7 @@ import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 const KEYS_DIR = join(import.meta.dirname, '..', 'keys');
-const NAMES = ['deployer', 'momo', 'meanie', 'vibes', 'resolver'] as const;
+const NAMES = ['deployer', 'momo', 'meanie', 'vibes', 'resolver', 'bull', 'bear', 'reserve1', 'reserve2'] as const;
 
 mkdirSync(KEYS_DIR, { recursive: true });
 

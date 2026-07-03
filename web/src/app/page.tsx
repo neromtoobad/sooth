@@ -38,6 +38,27 @@ interface PricePoint {
   p: number;
 }
 
+interface AgentRow {
+  name: string;
+  kind: 'heuristic' | 'llm';
+  susd: number | null;
+  pnl: number | null;
+  cspr: number | null;
+  trades: number;
+  dataSpend: number;
+  lastThesis: string | null;
+  lastAction: string | null;
+  lastTs: number | null;
+}
+
+interface Economy {
+  x402Revenue: number;
+  x402Payments: number;
+  tradingFees: number;
+  markets: number;
+  resolved: number;
+}
+
 function useJson<T>(url: string, intervalMs: number, initial: T): T {
   const [data, setData] = useState<T>(initial);
   const tick = useCallback(async () => {
@@ -72,7 +93,9 @@ function short(hash: string, n = 8): string {
 const AGENT_COLORS: Record<string, string> = {
   momo: 'text-info',
   meanie: 'text-amber',
-  vibes: 'text-no',
+  vibes: 'text-[#a3e635]',
+  bull: 'text-yes',
+  bear: 'text-no',
   resolver: 'text-yes',
   consumer: 'text-[#5eead4]',
   deployer: 'text-ink-dim',
@@ -292,6 +315,9 @@ export default function Dashboard() {
   );
   const activeMarket = markets.find((m) => m.hash === active);
 
+  const agents = useJson<AgentRow[]>('/api/agents', 45_000, []);
+  const economy = useJson<Economy | null>('/api/economy', 30_000, null);
+
   const stats = useMemo(() => {
     const payments = activity.filter((a) => a.x402_payment).length;
     const trades = markets.reduce((s, m) => s + m.trades, 0);
@@ -393,6 +419,94 @@ export default function Dashboard() {
         <div className="px-2 py-2">
           <Chart points={history} resolved={activeMarket?.resolved ?? false} />
         </div>
+      </section>
+
+      {/* the economy: agents get paid or go broke */}
+      <section className="mt-5 border border-line bg-surface">
+        <div className="flex items-center justify-between border-b border-line px-4 py-2">
+          <h2 className="font-mono text-[11px] tracking-[0.25em] text-ink-dim">
+            AGENT LEADERBOARD — INTELLIGENCE, PRICED
+          </h2>
+          <span className="font-mono text-[10px] tracking-widest text-ink-faint">
+            EVERY AGENT PAYS FOR ITS OWN DATA
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full font-mono text-[11px]">
+            <thead>
+              <tr className="border-b border-line text-left text-[9px] tracking-[0.2em] text-ink-faint">
+                <th className="px-4 py-2 font-normal">AGENT</th>
+                <th className="px-2 py-2 font-normal">TYPE</th>
+                <th className="px-2 py-2 text-right font-normal">sUSD</th>
+                <th className="px-2 py-2 text-right font-normal">CASH P&amp;L*</th>
+                <th className="px-2 py-2 text-right font-normal">TRADES</th>
+                <th className="px-2 py-2 text-right font-normal">DATA SPEND</th>
+                <th className="px-4 py-2 font-normal">LATEST CALL</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...agents]
+                .sort((a, b) => (b.pnl ?? -999) - (a.pnl ?? -999))
+                .map((a) => (
+                  <tr key={a.name} className="border-b border-line/40 last:border-0 hover:bg-surface-2">
+                    <td className={`px-4 py-2 font-bold ${AGENT_COLORS[a.name] ?? 'text-ink'}`}>
+                      [{a.name.toUpperCase()}]
+                    </td>
+                    <td className="px-2 py-2">
+                      <span
+                        className={`border px-1.5 py-0.5 text-[9px] tracking-widest ${
+                          a.kind === 'llm' ? 'border-amber-dim text-amber' : 'border-line-strong text-ink-dim'
+                        }`}
+                      >
+                        {a.kind === 'llm' ? 'LLM' : 'ALGO'}
+                      </span>
+                    </td>
+                    <td className="px-2 py-2 text-right tabular-nums text-ink">
+                      {a.susd != null ? a.susd.toFixed(2) : '—'}
+                    </td>
+                    <td
+                      className={`px-2 py-2 text-right tabular-nums font-bold ${
+                        a.pnl == null ? 'text-ink-faint' : a.pnl >= 0 ? 'text-yes' : 'text-no'
+                      }`}
+                    >
+                      {a.pnl != null ? `${a.pnl >= 0 ? '+' : ''}${a.pnl.toFixed(2)}` : '—'}
+                    </td>
+                    <td className="px-2 py-2 text-right tabular-nums text-ink-dim">{a.trades}</td>
+                    <td className="px-2 py-2 text-right tabular-nums text-ink-dim">
+                      {a.dataSpend.toFixed(1)}
+                    </td>
+                    <td className="max-w-[22rem] truncate px-4 py-2 text-ink-faint">
+                      {a.lastThesis ?? '…'}
+                    </td>
+                  </tr>
+                ))}
+              {agents.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-3 text-ink-faint">
+                    LOADING AGENTS…
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        {economy && (
+          <div className="flex flex-wrap gap-x-8 gap-y-1 border-t border-line px-4 py-2 font-mono text-[10px] tracking-wider text-ink-faint">
+            <span>
+              PROTOCOL REVENUE{' '}
+              <span className="text-amber">{economy.x402Revenue.toFixed(1)} sUSD</span> FROM{' '}
+              <span className="text-ink">{economy.x402Payments}</span> X402 CALLS
+            </span>
+            <span>
+              TRADING FEES <span className="text-amber">{economy.tradingFees.toFixed(2)} sUSD</span>
+            </span>
+            <span>
+              MARKETS <span className="text-ink">{economy.markets}</span> · RESOLVED{' '}
+              <span className="text-ink">{economy.resolved}</span>
+            </span>
+            <span className="text-ink-faint">*CASH ONLY — OPEN POSITIONS PAY AT RESOLUTION · THE ORACLE FUNDS ITSELF</span>
+          </div>
+        )}
       </section>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-5">

@@ -12,26 +12,30 @@ interface FeedPayload {
   ts: number;
 }
 
-let cache: { at: number; data: FeedPayload } | null = null;
+const GECKO_IDS: Record<string, string> = { btc: 'bitcoin', cspr: 'casper-network' };
+const cache = new Map<string, { at: number; data: FeedPayload }>();
 
-async function fetchBtc(): Promise<FeedPayload> {
-  if (cache && Date.now() - cache.at < CACHE_MS) return cache.data;
+async function fetchAsset(asset: string): Promise<FeedPayload> {
+  const id = GECKO_IDS[asset];
+  if (!id) throw new Error(`unknown asset ${asset}`);
+  const hit = cache.get(asset);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.data;
   const [spotRes, chartRes] = await Promise.all([
-    fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'),
-    fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1'),
+    fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`),
+    fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=1`),
   ]);
   if (!spotRes.ok || !chartRes.ok) {
-    if (cache) return cache.data; // serve stale over failing
+    if (hit) return hit.data; // serve stale over failing
     throw new Error(`coingecko upstream error: ${spotRes.status}/${chartRes.status}`);
   }
-  const spot = (await spotRes.json()) as { bitcoin: { usd: number } };
+  const spot = (await spotRes.json()) as Record<string, { usd: number }>;
   const chart = (await chartRes.json()) as { prices: [number, number][] };
   const data: FeedPayload = {
-    spot: spot.bitcoin.usd,
+    spot: spot[id].usd,
     series_24h: chart.prices,
     ts: Date.now(),
   };
-  cache = { at: Date.now(), data };
+  cache.set(asset, { at: Date.now(), data });
   return data;
 }
 
@@ -46,13 +50,17 @@ if (process.env.X402_DISABLED === '1') {
         price: process.env.X402_FEED_PRICE ?? '$0.0005',
         description: 'BTC/USD spot + 24h series — sooth market data feed',
       },
+      'GET /feed/cspr': {
+        price: process.env.X402_FEED_PRICE ?? '$0.0005',
+        description: 'CSPR/USD spot + 24h series — sooth market data feed',
+      },
     }),
   );
 }
 
-app.get('/feed/btc', async (_req, res) => {
+app.get('/feed/:asset', async (req, res) => {
   try {
-    res.json(await fetchBtc());
+    res.json(await fetchAsset(req.params.asset));
   } catch (e) {
     res.status(502).json({ error: String(e) });
   }
