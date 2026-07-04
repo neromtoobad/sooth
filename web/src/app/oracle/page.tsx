@@ -16,7 +16,7 @@ function TerminalFrame({
 }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="glass glass-frame-dim glass-frame relative rounded-lg">
+    <div className="glass glass-frame-dim glass-frame relative overflow-hidden rounded-2xl">
       <div className="flex items-center justify-between border-b border-line/60 px-3 py-1.5">
         <div className="flex items-center gap-2">
           <span className="flex gap-1.5">
@@ -55,7 +55,7 @@ export default function OraclePage() {
   return (
     <>
       {/* thesis spotlight */}
-      <section className="glass glass-8 glass-frame relative mt-6 overflow-hidden rounded-xl p-6">
+      <section className="glass glass-8 glass-frame relative mt-6 overflow-hidden rounded-2xl p-6">
         <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-amber/10 blur-3xl" />
         <div className="relative">
           <div className="text-[12px] font-medium text-amber">Why this is different</div>
@@ -106,7 +106,7 @@ export default function OraclePage() {
               accent: false,
             },
           ].map((s) => (
-            <div key={s.label} className="glass glass-8 glass-frame-dim glass-frame rounded-xl p-4">
+            <div key={s.label} className="glass glass-8 glass-frame-dim glass-frame rounded-2xl p-4">
               <div className="text-[12px] text-ink-faint">{s.label}</div>
               <div
                 className={`mt-1 font-mono text-2xl font-bold tabular-nums ${
@@ -175,7 +175,7 @@ export default function OraclePage() {
         </section>
 
         {/* why market-priced truth */}
-        <section className="rounded-xl border border-line bg-surface">
+        <section className="rounded-2xl border border-line bg-surface">
           <div className="border-b border-line px-4 py-3">
             <h2 className="font-[family-name:var(--font-display)] text-lg font-medium text-ink">
               Why a market beats a signature

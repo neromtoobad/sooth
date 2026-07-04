@@ -144,7 +144,7 @@ function StatusCards() {
 
   return (
     <div className="space-y-2 border-t border-line p-3">
-      <div className="rounded-lg border border-line bg-surface-2 p-3">
+      <div className="rounded-xl border border-line bg-surface-2 p-3">
         <div className="flex items-center gap-1.5">
           <span className="live-dot h-1.5 w-1.5 rounded-full bg-yes" />
           <span className="font-mono text-[9px] tracking-[0.18em] text-yes">TESTNET · LIVE</span>
@@ -153,7 +153,7 @@ function StatusCards() {
           every action is a real transaction on Casper
         </div>
       </div>
-      <div className="rounded-lg border border-line bg-surface-2 p-3">
+      <div className="rounded-xl border border-line bg-surface-2 p-3">
         <div className="font-mono text-[9px] tracking-[0.18em] text-ink-faint">ON-CHAIN</div>
         <div className="mt-1 flex items-baseline gap-3 font-mono text-[13px] text-ink">
           <span>

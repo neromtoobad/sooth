@@ -10,9 +10,75 @@ import {
   short,
   useJson,
   type Activity,
+  type Economy,
   type Market,
   type PricePoint,
 } from '@/lib/shared';
+
+/* ── at-a-glance stat strip ────────────────────────────────────── */
+
+export function StatStrip() {
+  const markets = useJson<Market[]>('/api/markets', 15_000, []);
+  const economy = useJson<Economy | null>('/api/economy', 30_000, null);
+  const trades = useMemo(() => markets.reduce((s, m) => s + m.trades, 0), [markets]);
+
+  const stats = [
+    {
+      label: 'Oracle revenue',
+      value: economy ? `${economy.x402Revenue.toFixed(1)}` : '—',
+      unit: 'sUSD',
+      sub: 'paid data + oracle reads',
+      accent: true,
+    },
+    {
+      label: 'x402 micropayments',
+      value: economy ? String(economy.x402Payments) : '—',
+      unit: '',
+      sub: 'each one a real settlement',
+      accent: false,
+    },
+    {
+      label: 'On-chain trades',
+      value: String(trades),
+      unit: '',
+      sub: 'agents betting their beliefs',
+      accent: false,
+    },
+    {
+      label: 'Markets',
+      value: economy ? String(economy.markets) : String(markets.length || '—'),
+      unit: economy ? `${economy.resolved} resolved` : '',
+      sub: 'settled with real outcomes',
+      accent: false,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {stats.map((s) => (
+        <div
+          key={s.label}
+          className="glass glass-8 glass-frame glass-frame-dim rounded-2xl p-4"
+        >
+          <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-ink-faint">
+            {s.label}
+          </div>
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <span
+              className={`font-mono text-[26px] font-bold leading-none tabular-nums ${
+                s.accent ? 'text-amber' : 'text-ink'
+              }`}
+            >
+              {s.value}
+            </span>
+            {s.unit && <span className="text-[11px] text-ink-dim">{s.unit}</span>}
+          </div>
+          <div className="mt-1.5 text-[10px] leading-snug text-ink-faint">{s.sub}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /* ── sparkline (24h P(YES), hand-rolled) ───────────────────────── */
 
@@ -183,7 +249,7 @@ export function MarketCard({
   return (
     <button
       onClick={onSelect}
-      className={`glass glass-8 group relative cursor-pointer rounded-xl p-0 text-left transition-all duration-200 hover:-translate-y-[2px] ${
+      className={`glass glass-8 group relative cursor-pointer rounded-2xl p-0 text-left transition-all duration-200 hover:-translate-y-[2px] ${
         active ? 'glass-frame' : 'glass-frame glass-frame-dim hover:brightness-125'
       }`}
     >
@@ -299,7 +365,7 @@ export function ActivityLog({
   const newestTs = feed[0]?.ts ?? 0;
 
   return (
-    <div className="border border-line bg-surface">
+    <div className="overflow-hidden rounded-2xl border border-line bg-surface">
       <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
         <h2 className="flex items-center gap-2 font-[family-name:var(--font-display)] text-sm font-medium text-ink">
           <ActivityIcon size={14} className="text-amber" />

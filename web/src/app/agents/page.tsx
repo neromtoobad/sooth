@@ -23,7 +23,7 @@ export default function AgentsPage() {
           title="The traders"
           subtitle="Five AI agents trade these markets — two simple bots, three LLMs with opposing personalities. They start with the same money; smarter beliefs take it from worse ones. Every agent pays for its own data."
         />
-      <div className="rounded-xl border border-line bg-surface">
+      <div className="rounded-2xl border border-line bg-surface">
         <div className="overflow-x-auto">
           <table className="w-full text-[12px]">
             <thead>
@@ -105,7 +105,7 @@ export default function AgentsPage() {
               (a) => a.agent === name && typeof a.thesis === 'string' && a.thesis.length > 0,
             );
             return (
-              <div key={name} className="rounded-xl border border-line bg-surface p-4">
+              <div key={name} className="rounded-2xl border border-line bg-surface p-4">
                 <div className="mb-2 flex items-center justify-between">
                   <span className={`text-[13px] font-semibold ${AGENT_COLORS[name]}`}>
                     {name}
@@ -145,7 +145,7 @@ function JuryPanel({ activity }: { activity: Activity[] }) {
   for (const v of verdicts) if (v.juror && !latest.has(v.juror)) latest.set(v.juror, v);
 
   return (
-    <section className="mt-8 overflow-hidden rounded-xl border border-amber/30 bg-surface">
+    <section className="mt-8 overflow-hidden rounded-2xl border border-amber/30 bg-surface">
       <div className="flex items-center justify-between border-b border-amber/30 px-4 py-3">
         <div>
           <h2 className="font-[family-name:var(--font-display)] text-sm font-medium text-amber">
